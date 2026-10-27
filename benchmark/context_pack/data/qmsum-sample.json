@@ -1,0 +1,67 @@
+{
+  "description": "Local 40-round scenario, not the organizer hidden measurement sequence.",
+  "meeting_id": "ES2004a",
+  "upstream_commit": "83d7768c1f2b4dfeb091385d3dc7e239b8e5bb7e",
+  "upstream_url": "https://github.com/Yale-LILY/QMSum",
+  "source_file": "data/ALL/jsonl/test.jsonl",
+  "source_sha256": "6bcd428211260ad2efae3af76cbaf6a7f5ae4bb5e1e59c45a4b8e89539cb9208",
+  "initial_turns": 8,
+  "rounds": 40,
+  "append_before_round": [
+    10,
+    20,
+    30
+  ],
+  "queries": [
+    "remote",
+    "project",
+    "controls",
+    "project"
+  ],
+  "turns": [
+    {
+      "turn_index": 184,
+      "text": "Project Manager: Okay . What are your experiences with remote controls ? I mean I've got {disfmarker} we got um {disfmarker} we had three videos , a T_V_ and a sort of amp thing all set up"
+    },
+    {
+      "turn_index": 185,
+      "text": "User Interface: Mm-hmm ."
+    },
+    {
+      "turn_index": 186,
+      "text": "Project Manager: so we got one of the universal remote controls , um that you programme each of your things into ,"
+    },
+    {
+      "turn_index": 187,
+      "text": "Industrial Designer: Yeah ."
+    },
+    {
+      "turn_index": 188,
+      "text": "User Interface: Yeah ,"
+    },
+    {
+      "turn_index": 189,
+      "text": "Industrial Designer: Yeah ."
+    },
+    {
+      "turn_index": 190,
+      "text": "Marketing: Alright ."
+    },
+    {
+      "turn_index": 191,
+      "text": "User Interface: that c"
+    },
+    {
+      "turn_index": 192,
+      "text": "Project Manager: but that kept losing the signals so we'd have to re-programme it every now and again . I think it was quite a cheapie as well , so that might have had something to do with it ,"
+    },
+    {
+      "turn_index": 193,
+      "text": "Industrial Designer: Yeah uh ."
+    },
+    {
+      "turn_index": 194,
+      "text": "Marketing: Mm-hmm ."
+    }
+  ]
+}

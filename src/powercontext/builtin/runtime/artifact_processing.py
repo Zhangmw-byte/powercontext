@@ -117,6 +117,8 @@ class ArtifactProcessingBinding:
     # Only automatic admission is filtered; already accepted requests retain
     # their own Worker authorization and domain completion semantics.
     automatic_scope_filter: Callable[[AsyncConnection, tuple[str, ...]], Awaitable[frozenset[str]]] | None = None
+    # Independent admission channel; never filters explicit requests or retries.
+    source_count_scope_filter: Callable[[AsyncConnection, tuple[str, ...]], Awaitable[frozenset[str]]] | None = None
 
     def __post_init__(self) -> None:
         if not self.binding_name or self.binding_name != self.binding_name.strip():
@@ -395,6 +397,8 @@ class _FamilyState:
     scan_after: int = 0
     scan_generation: int = 0
     scan_in_progress: bool = False
+    count_after: int = 0
+    next_count_at: float = 0.0
     reconcile_after: str | None = None
     reconcile_complete: bool = False
     notification_at_start: int = 0
@@ -585,6 +589,8 @@ class ArtifactProcessingSupervisor:
             state.discovery_pending = True
             state.reconcile_complete = False
             state.reconcile_after = None
+            state.count_after = 0
+            state.next_count_at = 0.0
         if self._lease_mode == "oceanbase":
             self._renew_task = asyncio.create_task(self._renew(), name=f"artifact-lease-{self._supervisor_group}")
 
@@ -656,6 +662,42 @@ class ArtifactProcessingSupervisor:
         else:
             await self._discover_requested(state)
             await self._discover_automatic(state)
+        await self._discover_source_counts(state)
+
+    async def _discover_source_counts(self, state: _FamilyState) -> None:
+        qualify = state.binding.source_count_scope_filter
+        capacity = min(self._fresh_capacity(state), _DISCOVERY_PAGE_SIZE)
+        loop = asyncio.get_running_loop()
+        if qualify is None or capacity <= 0 or loop.time() < state.next_count_at:
+            return
+        admitted: list[str] = []
+        async with self._database.transaction() as connection:
+            await self._leases.require_fence(connection, self._require_current_fence())
+            rows = await self._intents.scan(
+                connection,
+                state.binding.binding_name,
+                after_sequence=state.count_after,
+                limit=capacity,
+                dirty_only=True,
+            )
+            candidates = tuple(
+                row.scope_id
+                for row in rows
+                if row.requested_generation == row.handled_generation
+                and row.scope_id not in state.queued
+                and row.scope_id not in state.running
+                and row.scope_id not in state.retries
+            )
+            eligible = await qualify(connection, candidates) if candidates else frozenset()
+            for scope in candidates:
+                if scope in eligible:
+                    await self._intents.request(connection, scope, state.binding.binding_name)
+                    admitted.append(scope)
+        # A rolled-back admission must not publish its page frontier or RAM queue.
+        state.count_after = rows[-1].pending_sequence if len(rows) == capacity else 0
+        state.next_count_at = loop.time() + (_DISCOVERY_PAGE_DELAY_SECONDS if state.count_after else self._tick)
+        for scope in admitted:
+            self._enqueue(state, scope)
 
     async def _discover_requested(self, state: _FamilyState) -> None:
         capacity = self._fresh_capacity(state)
@@ -1093,6 +1135,8 @@ class ArtifactProcessingSupervisor:
                 continue
             if state.next_schedule_at is not None:
                 deadlines.append(state.next_schedule_at)
+            if state.binding.source_count_scope_filter is not None:
+                deadlines.append(state.next_count_at)
             if state.discovery_pending or state.scan_in_progress or not state.reconcile_complete or state.degraded:
                 deadlines.append(max(now, state.next_discovery_at))
         return None if not deadlines else max(0.001, min(deadlines) - now)

@@ -45,6 +45,32 @@ async def enabled_profile_scopes(connection: AsyncConnection, scope_ids: tuple[s
     return frozenset(rows)
 
 
+async def source_count_scopes(
+    connection: AsyncConnection,
+    scope_ids: tuple[str, ...],
+    *,
+    binding_name: str,
+    threshold: int,
+) -> frozenset[str]:
+    """Compare one bounded metadata page with each Family's successful cursor.
+
+    Journal positions are allocated contiguously in the Source insert transaction.
+    Replays and receipt attestation upgrades retain their original position; lineage
+    Sources allocate a position even though they are not generation evidence.
+    """
+
+    if not scope_ids:
+        return frozenset()
+    heads = SOURCE_JOURNAL_HEADS_TABLE
+    cursors = await SourceCursorRepository().load_many(connection, scope_ids, binding_name)
+    rows = await connection.execute(select(heads.c.scope_id, heads.c.position).where(heads.c.scope_id.in_(scope_ids)))
+    return frozenset(
+        scope
+        for scope, high in rows
+        if int(high) - (cursors[scope].cursor.sequence if scope in cursors else 0) >= threshold
+    )
+
+
 class SourceProcessingPendingProvider:
     """Inspect journal metadata, never Source bodies, prompts, or models."""
 

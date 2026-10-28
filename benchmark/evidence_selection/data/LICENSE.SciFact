@@ -1,0 +1,22 @@
+SciFact public training excerpt
+
+Source: David Wadden, Shanchuan Lin, Kyle Lo, Lucy Lu Wang, Madeleine van Zuylen,
+Arman Cohan, and Hannaneh Hajishirzi. Fact or Fiction: Verifying Scientific Claims.
+EMNLP 2020. https://github.com/allenai/scifact
+
+Data archive: https://scifact.s3-us-west-2.amazonaws.com/release/latest/data.tar.gz
+Archive SHA256: 11c621288d41ac144d29b13b0f8503b3820b7d6e8b1f6ff24dff335c196d76be
+
+Claims and evidence annotations: CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+Scientific abstract database (S2ORC): ODC-By 1.0
+https://opendatacommons.org/licenses/by/1-0/
+
+This file contains attribution for the selected original public training claims,
+abstracts, and evidence annotations in scifact-train-sample.json. The diagnostic
+is independent of the competition evaluation workload. The sample preserves
+original claim and document identifiers and original title/abstract text.
+Evidence offsets were derived from the annotated original abstract sentences;
+two distractors per claim were selected by query-word overlap and document order
+was rotated. No source evidence was paraphrased. This is not an endorsement by
+the original authors. The product's src/ implementation never reads this data.

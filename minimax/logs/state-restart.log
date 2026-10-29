@@ -1,0 +1,22 @@
+# 模块重启后读取 PowerContext 状态（每次 CLI 调用都是一个新进程）
+# command: python -m sdd_context --runtime .runtime state-show
+# time: 2026-10-29T10:55:34+08:00
+scope_id: scp_2e17hr0h6spsttx1k0dx76c2qj
+updated_at: 2026-10-29T10:55:34+08:00
+verifications: 4
+ - target-before exit 1 passed False
+ - regression-before exit 0 passed True
+ - target-after exit 0 passed True
+ - regression-after exit 0 passed True
+OK: 重启后的新进程成功读取并复用 PowerContext 状态
+
+# 重新生成上下文（新进程）后，PowerContext 状态段落：
+## 5. 任务状态（PowerContext）
+
+- 状态来源：已从 PowerContext 读取任务状态
+- Scope：`scp_2e17hr0h6spsttx1k0dx76c2qj`，最新 revision：1
+- 已完成：['锁定任务与适用规格：SPEC-001 ~ SPEC-005 已导入 seekdb 并可检索', '上下文模块生成任务上下文包，并交给 MiniMax M3.1 Flash 完成代码修改', '目标功能测试修改前失败、修改后全部通过；回归测试修改前后均通过', '验证结果已写入 PowerContext，可被 Module 重启后的新进程读取复用']
+- 待办：['训练营评测提交并在提测记录中确认结果']
+- 已有验证结果：[{'name': 'target-before', 'command': 'cd sample-app && python -m pytest tests/test_target_feature.py -q', 'exit_code': 1, 'passed': False, 'code_sha': '8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729', 'recorded_at': '2026-10-29T10:55:30+08:00'}, {'name': 'regression-before', 'command': 'cd sample-app && python -m pytest tests/test_regression.py -q', 'exit_code': 0, 'passed': True, 'code_sha': '8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729', 'recorded_at': '2026-10-29T10:55:31+08:00'}, {'name': 'target-after', 'command': 'cd sample-app && python -m pytest tests/test_target_feature.py -q', 'exit_code': 0, 'passed': True, 'code_sha': 'aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887', 'recorded_at': '2026-10-29T10:55:32+08:00'}, {'name': 'regression-after', 'command': 'cd sample-app && python -m pytest tests/test_regression.py -q', 'exit_code': 0, 'passed': True, 'code_sha': 'aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887', 'recorded_at': '2026-10-29T10:55:33+08:00'}]
+
+## 6. 给开发助手的执行要求

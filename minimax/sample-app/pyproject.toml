@@ -1,0 +1,10 @@
+[project]
+name = "order-service-sample"
+version = "0.1.0"
+description = "SDD 上下文管理系统验证样例使用的可运行小业务工程"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

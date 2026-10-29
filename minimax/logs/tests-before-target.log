@@ -1,0 +1,99 @@
+# 修改前测试：target（期望退出码 1）
+# command: cd sample-app && python -m pytest tests/test_target_feature.py -q -o addopts=''
+# code_version: sample-app/order_service/orders.py sha256=8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729
+# python: Python 3.14.4
+# time: 2026-10-29T10:55:29+08:00
+F.FFFFFFF.                                                               [100%]
+=================================== FAILURES ===================================
+___________________ test_filter_returns_only_matching_status ___________________
+
+    def test_filter_returns_only_matching_status():
+        result = list_orders(_sample_orders(), status="paid")
+>       assert [o.order_id for o in result] == ["o2", "o3", "o5"]
+E       AssertionError: assert ['o1', 'o2', 'o3', 'o4', 'o5'] == ['o2', 'o3', 'o5']
+E         
+E         At index 0 diff: 'o1' != 'o2'
+E         Left contains 2 more items, first extra item: 'o4'
+E         Use -v to get more diff
+
+tests/test_target_feature.py:25: AssertionError
+______________________ test_filter_rejects_unknown_status ______________________
+
+    def test_filter_rejects_unknown_status():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_target_feature.py:35: Failed
+_____________________ test_pagination_applies_after_filter _____________________
+
+    def test_pagination_applies_after_filter():
+        page2 = list_orders(_sample_orders(), status="paid", page=2, page_size=2)
+>       assert [o.order_id for o in page2] == ["o5"]
+E       AssertionError: assert ['o1', 'o2', 'o3', 'o4', 'o5'] == ['o5']
+E         
+E         At index 0 diff: 'o1' != 'o5'
+E         Left contains 4 more items, first extra item: 'o2'
+E         Use -v to get more diff
+
+tests/test_target_feature.py:41: AssertionError
+______________ test_pagination_keeps_default_order_without_filter ______________
+
+    def test_pagination_keeps_default_order_without_filter():
+        result = list_orders(_sample_orders(), page=2, page_size=2)
+>       assert [o.order_id for o in result] == ["o3", "o4"]
+E       AssertionError: assert ['o1', 'o2', 'o3', 'o4', 'o5'] == ['o3', 'o4']
+E         
+E         At index 0 diff: 'o1' != 'o3'
+E         Left contains 3 more items, first extra item: 'o3'
+E         Use -v to get more diff
+
+tests/test_target_feature.py:46: AssertionError
+_____________ test_pagination_page_beyond_range_returns_empty_list _____________
+
+    def test_pagination_page_beyond_range_returns_empty_list():
+>       assert list_orders(_sample_orders(), page=9, page_size=2) == []
+E       AssertionError: assert [Order(order_...imezone.utc))] == []
+E         
+E         Left contains 5 more items, first extra item: Order(order_id='o1', customer='alice', amount=10.0, status='pending', created_at=datetime.datetime(2026, 10, 29, 2, 55, 30, 70976, tzinfo=datetime.timezone.utc))
+E         Use -v to get more diff
+
+tests/test_target_feature.py:50: AssertionError
+________________________ test_pagination_validates_page ________________________
+
+    def test_pagination_validates_page():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_target_feature.py:54: Failed
+_____________________ test_pagination_validates_page_size ______________________
+
+    def test_pagination_validates_page_size():
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_target_feature.py:59: Failed
+____________ test_status_and_pagination_combined_with_empty_result _____________
+
+    def test_status_and_pagination_combined_with_empty_result():
+        # 类型筛选后没有数据时返回空列表，而不是报错
+>       assert list_orders(_sample_orders(), status="cancelled", page=1, page_size=10) == []
+E       AssertionError: assert [Order(order_...imezone.utc))] == []
+E         
+E         Left contains 5 more items, first extra item: Order(order_id='o1', customer='alice', amount=10.0, status='pending', created_at=datetime.datetime(2026, 10, 29, 2, 55, 30, 74968, tzinfo=datetime.timezone.utc))
+E         Use -v to get more diff
+
+tests/test_target_feature.py:67: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_target_feature.py::test_filter_returns_only_matching_status
+FAILED tests/test_target_feature.py::test_filter_rejects_unknown_status - Fai...
+FAILED tests/test_target_feature.py::test_pagination_applies_after_filter - A...
+FAILED tests/test_target_feature.py::test_pagination_keeps_default_order_without_filter
+FAILED tests/test_target_feature.py::test_pagination_page_beyond_range_returns_empty_list
+FAILED tests/test_target_feature.py::test_pagination_validates_page - Failed:...
+FAILED tests/test_target_feature.py::test_pagination_validates_page_size - Fa...
+FAILED tests/test_target_feature.py::test_status_and_pagination_combined_with_empty_result
+8 failed, 2 passed in 0.02s
+# exit_code=1

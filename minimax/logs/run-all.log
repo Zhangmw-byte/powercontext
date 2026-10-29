@@ -1,0 +1,56 @@
+[10:55:07] 清空运行时目录 /home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime（KEEP_RUNTIME=1 可保留）
+[10:55:07] ========== 1/7 启动 PowerContext Server ==========
+[10:55:19] PowerContext 已就绪：http://127.0.0.1:18080
+[10:55:19] ========== 2/7 初始化 + 导入 seekdb ==========
+[10:55:19] 初始化运行时 / seekdb 库表 / PowerContext Scope
+{
+  "runtime": "/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime",
+  "scope": {
+    "scope_id": "scp_2e17hr0h6spsttx1k0dx76c2qj",
+    "title": "SDD 上下文任务",
+    "powercontext_url": "http://127.0.0.1:18080",
+    "created_at": "2026-10-29T10:55:22+08:00"
+  },
+  "doc_counts": {}
+}
+[10:55:22] 导入工程资料到 seekdb（规格 / 代码 / 测试）
+导入文档数: 9 | 分类: {'code': 2, 'spec': 5, 'test': 2}
+[10:55:24] 从空状态保存初始任务记录到 PowerContext
+[10:55:27] seekdb 初始化与导入完成（明细见 .runtime/doctor.json）
+[10:55:27] ========== 3/7 生成任务上下文 ==========
+[10:55:27] 按任务描述生成上下文包
+规格覆盖: ['SPEC-001', 'SPEC-002', 'SPEC-003', 'SPEC-004', 'SPEC-005'] | 缺失: []
+代码条目: 2 | 目标测试: 1 | 回归测试: 1
+[10:55:29] 上下文已生成：.runtime/context.md（快照 logs/context-snapshot.md）
+[10:55:29] ========== 4/7 修改前测试（目标测试失败 / 回归测试通过） ==========
+[10:55:29] 已切换到修改前代码（sha256=8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729）
+[10:55:30] target 退出码=1（期望 1）
+[10:55:30] regression 退出码=0（期望 0）
+[10:55:30] 已恢复修改后的代码
+[10:55:31] 修改前验证结果已写入 PowerContext
+[10:55:31] ========== 5/7 修改后测试（全部通过）+ 验证结果写入 PowerContext ==========
+[10:55:31] 当前（修改后）代码 sha256=aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887
+[10:55:32] target 退出码=0（期望 0）
+[10:55:32] regression 退出码=0（期望 0）
+[10:55:34] 修改后验证结果已写入 PowerContext，状态已收尾（见 .runtime/state-final.json）
+[10:55:34] ========== 6/7 重启后状态复用 ==========
+[10:55:37] 状态复用演示通过：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/state-restart.log
+[10:55:37] ========== 7/7 规格更新 + 重新导入演示 ==========
+# 规格更新 + 重新导入演示
+# command: cp sample-task/spec-updates/SPEC-003-filter-v2.md sample-task/specs/SPEC-003-filter.md; python -m sdd_context ingest; python -m sdd_context context
+# time: 2026-10-29T10:55:37+08:00
+[更新前] context.md 不含 v2 更新内容
+53:### SPEC-003 订单列表：按状态筛选（v2 更新版，用于“规格更新后重新导入”演示）
+59:# SPEC-003 订单列表：按状态筛选（v2 更新版，用于“规格更新后重新导入”演示）
+64:## v2 更新（2026-10-29）
+[更新并重新导入后] 上下文命中 v2 更新内容（见上）
+[恢复原始规格并重新导入后] context.md 不再包含 v2 更新内容
+OK: 规格更新 → 上下文跟随变化 → 恢复后回到原内容。
+[10:55:48] 规格更新演示通过：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/spec-update-demo.log
+[10:55:48] 全部验证通过。
+[10:55:48]   上下文：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime/context.md
+[10:55:48]   测试日志：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/tests-before-*.log、/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/tests-after-*.log
+[10:55:48]   状态复用：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/state-restart.log
+[10:55:48]   规格更新：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/spec-update-demo.log
+[10:55:48]   数据库脚本：/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/logs/db-query.log（运行时）
+[10:55:48] 如需停止 PowerContext：bash scripts/99_stop_powercontext.sh

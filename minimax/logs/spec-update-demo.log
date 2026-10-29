@@ -1,0 +1,10 @@
+# 规格更新 + 重新导入演示
+# command: cp sample-task/spec-updates/SPEC-003-filter-v2.md sample-task/specs/SPEC-003-filter.md; python -m sdd_context ingest; python -m sdd_context context
+# time: 2026-10-29T10:55:37+08:00
+[更新前] context.md 不含 v2 更新内容
+53:### SPEC-003 订单列表：按状态筛选（v2 更新版，用于“规格更新后重新导入”演示）
+59:# SPEC-003 订单列表：按状态筛选（v2 更新版，用于“规格更新后重新导入”演示）
+64:## v2 更新（2026-10-29）
+[更新并重新导入后] 上下文命中 v2 更新内容（见上）
+[恢复原始规格并重新导入后] context.md 不再包含 v2 更新内容
+OK: 规格更新 → 上下文跟随变化 → 恢复后回到原内容。

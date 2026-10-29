@@ -1,0 +1,98 @@
+--- sample-task/before/orders.py	2026-10-29 10:41:30.056308072 +0800
++++ sample-task/after/orders.py	2026-10-29 10:45:13.739772565 +0800
+@@ -1,8 +1,7 @@
+ """订单服务示例业务代码（SDD 上下文管理系统的“被修改对象”）。
+ 
+-对应规格见 ``sample-task/specs/``。本文件是**修改前**的初始版本：
+-``list_orders`` 尚未实现 SPEC-003（按状态筛选）与 SPEC-004（分页），
+-其余函数提供题目要求的“原有行为”，修改后必须保持不变（SPEC-005）。
++对应规格见 ``sample-task/specs/``。``list_orders`` 已实现 SPEC-003（按状态筛选）
++与 SPEC-004（分页），其余函数提供题目要求的“原有行为”，保持不变（SPEC-005）。
+ """
+ 
+ from __future__ import annotations
+@@ -74,21 +73,78 @@
+     )
+ 
+ 
++# SPEC-004：分页参数取值范围（私有常量）
++_MIN_PAGE_SIZE = 1
++_MAX_PAGE_SIZE = 100
++
++
++def _is_int(value: object) -> bool:
++    """判断是否为整数（bool 不视为整数）。"""
++    return isinstance(value, int) and not isinstance(value, bool)
++
++
++def _validate_pagination(
++    page: int | None, page_size: int | None
++) -> tuple[int, int] | None:
++    """校验分页参数（SPEC-004）。
++
++    - ``page`` 必须是大于等于 1 的整数；
++    - ``page_size`` 必须是 1～100 之间的整数（含边界）；
++    - 两个参数必须成对出现（要么都传，要么都不传）；
++    - 非法参数抛出 ``ValueError``。
++
++    返回 ``(page, page_size)``；未分页时返回 ``None``。
++    """
++    if page is not None:
++        if not _is_int(page):
++            raise ValueError("page must be an integer")
++        if page < 1:
++            raise ValueError("page must be an integer greater than or equal to 1")
++    if page_size is not None:
++        if not _is_int(page_size):
++            raise ValueError("page_size must be an integer")
++        if not (_MIN_PAGE_SIZE <= page_size <= _MAX_PAGE_SIZE):
++            raise ValueError(
++                f"page_size must be an integer between {_MIN_PAGE_SIZE} "
++                f"and {_MAX_PAGE_SIZE}"
++            )
++    if (page is None) != (page_size is None):
++        raise ValueError("page and page_size must be provided together")
++    if page is None or page_size is None:
++        return None
++    return page, page_size
++
++
+ def list_orders(
+     orders: Iterable[Order],
+     status: str | None = None,
+     page: int | None = None,
+     page_size: int | None = None,
+ ) -> list[Order]:
+-    """按创建顺序返回订单列表（SPEC-002 默认查询）。
++    """返回订单列表（SPEC-002 默认查询 + SPEC-003 状态筛选 + SPEC-004 分页）。
+ 
+-    当前实现只做默认查询：返回全部订单，保持传入顺序。
++    - ``status=None``（缺省）：返回全部订单，保持传入顺序（SPEC-002）；
++    - ``status`` 为合法状态：只返回状态匹配的订单，保持原有相对顺序（SPEC-003）；
++    - ``status`` 不在 ``VALID_STATUSES`` 中：抛出 ``ValueError``（SPEC-003）；
++    - ``page`` / ``page_size`` 成对出现时，在筛选结果上分页；页码从 1 开始，
++      ``page_size`` 取值 1～100；页码超出范围返回空列表（SPEC-004）。
+ 
+-    TODO(SPEC-003)：实现 status 状态筛选。
+-    TODO(SPEC-004)：实现 page/page_size 分页；参数校验见规格。
++    始终返回新的列表对象，不修改传入的订单集合。
+     """
+-    # 修改前：status/page/page_size 是预留参数，尚未实现，传入后被忽略。
+-    return list(orders)
++    if status is not None and status not in VALID_STATUSES:
++        raise ValueError(f"unknown order status: {status!r}")
++    pagination = _validate_pagination(page, page_size)
++
++    result = list(orders)
++    # SPEC-003：先筛选，保持原有相对顺序
++    if status is not None:
++        result = [order for order in result if order.status == status]
++    # SPEC-004：筛选后再分页；页码越界自然得到空列表
++    if pagination is not None:
++        current_page, size = pagination
++        start = (current_page - 1) * size
++        result = result[start : start + size]
++    return result
+ 
+ 
+ def advance_status(order: Order, new_status: str) -> Order:

@@ -1,0 +1,301 @@
+{
+  "task": "# 验证样例任务：订单列表增加状态筛选与分页\n\n> 本文件是 SDD 上下文管理系统验证样例的**任务描述**。评审可按本文件复现完整流程：\n> 导入资料 → 生成上下文 → 把上下文交给使用 MiniMax 的开发助手 → 修改代码 → 跑测试。\n\n## 1. 要改什么\n\n在 `sample-app/order_service/orders.py` 的 `list_orders` 中实现两个新需求：\n\n| 规格 | 内容 | 状态 |\n|---|---|---|\n| SPEC-003 | `status` 参数：按订单状态筛选，缺省（None）返回全部；非法状态抛 `ValueError` | 待实现 |\n| SPEC-004 | `page` / `page_size` 参数：在筛选结果上分页；参数校验见规格 | 待实现 |\n\n允许新增私有辅助函数或常量；**不要修改测试文件**，不要改动与本次需求无关的代码。\n\n## 2. 哪些原有行为必须保持（SPEC-005）\n\n- `list_orders(orders)` 不传新增参数时：返回全部订单、保持传入顺序、不修改输入（SPEC-002）\n- `create_order` 的输入校验与默认状态（SPEC-001）\n- `advance_status` 的状态流转规则（SPEC-005）\n- `summarize_orders` 的输出结构与数值（SPEC-005）\n\n## 3. 验收标准\n\n1. **修改前**：`pytest tests/test_target_feature.py` 失败（功能未实现），`pytest tests/test_regression.py` 全部通过；\n2. **修改后**：`pytest tests/test_target_feature.py` 与 `pytest tests/test_regression.py` 全部通过；\n3. 测试集在修改前后保持一致，不得删除断言、跳过测试或修改预期结果；\n4. 修改后的代码差异（diff）与本任务规格逐条对应。\n\n## 4. 关联资料（上下文模块应选出的来源）\n\n- 规格：`sample-task/specs/SPEC-002-list-default.md`、`SPEC-003-filter.md`、`SPEC-004-pagination.md`、`SPEC-005-compatibility.md`\n- 代码：`sample-app/order_service/orders.py`（`Order` / `create_order` / `list_orders` / `advance_status` / `summarize_orders`）\n- 测试：`sample-app/tests/test_target_feature.py`、`sample-app/tests/test_regression.py`\n\n## 5. 预期结果\n\n- 目标测试 10 条：修改前 8 条失败、2 条通过（默认行为用例）；修改后 10 条全部通过；\n- 回归测试 16 条全部通过（修改前后都通过）；\n- `list_orders` 实现符合 SPEC-003 / SPEC-004，默认行为与 SPEC-002 一致。\n",
+  "generated_at": "2026-10-29T10:55:37+08:00",
+  "seekdb": {
+    "database_path": "/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime/seekdb",
+    "database": "sdd",
+    "doc_counts": {
+      "code": 2,
+      "spec": 5,
+      "test": 2
+    },
+    "query_id": "q-20261029025537261500",
+    "query_log": "/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime/db-query.log"
+  },
+  "retrieval": {
+    "terms": [
+      "sdd",
+      "minimax",
+      "sample-app",
+      "order_service",
+      "orders",
+      "py",
+      "list_orders",
+      "spec-003",
+      "status",
+      "none",
+      "valueerror",
+      "spec-004",
+      "page",
+      "page_size",
+      "spec-005",
+      "spec-002",
+      "create_order",
+      "spec-001",
+      "advance_status",
+      "summarize_orders",
+      "pytest",
+      "tests",
+      "test_target_feature",
+      "test_regression",
+      "diff",
+      "sample-task",
+      "specs",
+      "spec-002-list-default",
+      "md",
+      "spec-003-filter",
+      "spec-004-pagination",
+      "spec-005-compatibility",
+      "order",
+      "验证",
+      "证样",
+      "样例",
+      "例任",
+      "任务",
+      "验证样",
+      "证样例",
+      "样例任",
+      "例任务",
+      "订单",
+      "单列",
+      "列表",
+      "表增",
+      "增加",
+      "加状",
+      "状态",
+      "态筛",
+      "筛选",
+      "选与",
+      "与分",
+      "分页",
+      "订单列",
+      "单列表",
+      "列表增",
+      "表增加",
+      "增加状",
+      "加状态"
+    ],
+    "query_id": "q-20261029025537261500"
+  },
+  "specs": [
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-003-filter.md",
+      "path": "sample-task/specs/SPEC-003-filter.md",
+      "title": "SPEC-003 订单列表：按状态筛选（本任务新增）",
+      "symbols": [
+        "SPEC-002",
+        "SPEC-003",
+        "SPEC-004"
+      ],
+      "content": "PATH: sample-task/specs/SPEC-003-filter.md\nKIND: spec\nTITLE: SPEC-003 订单列表：按状态筛选（本任务新增）\n\n# SPEC-003 订单列表：按状态筛选（本任务新增）\n\n- 规格 ID：SPEC-003\n- 类型：新增需求（本任务要实现）\n- 关联代码：`sample-app/order_service/orders.py` → `list_orders`\n- 关联测试：`sample-app/tests/test_target_feature.py` 中的筛选相关用例\n\n## 需求\n\n`list_orders(orders, status=...)`：\n\n1. `status=None` 时行为与 SPEC-002 完全一致（返回全部、保持顺序）；\n2. `status` 为合法状态（`VALID_STATUSES`：pending / paid / shipped / cancelled）时，\n   只返回状态匹配的订单，且保持原有相对顺序；\n3. `status` 不在 `VALID_STATUSES` 中时，抛出 `ValueError`；\n4. 不修改传入的订单集合。\n\n## 验收\n\n- `status=\"paid\"` 只返回状态为 paid 的订单，顺序与创建顺序一致；\n- `status=\"refunded\"`（非法值）抛出 `ValueError`；\n- `status=None` 返回全部订单（与 SPEC-002 一致）。\n\n## 兼容性\n\n- 本规格不得改变 SPEC-002 的默认行为；\n- 与 SPEC-004（分页）组合时，先筛选后分页。\n",
+      "score": 4.0,
+      "excerpt": "# SPEC-003 订单列表：按状态筛选（本任务新增）\n- 规格 ID：SPEC-003\n- 类型：新增需求（本任务要实现）\n- 关联代码：`sample-app/order_service/orders.py` → `list_orders`\n- 关联测试：`sample-app/tests/test_target_feature.py` 中的筛选相关用例\n## 需求"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-004-pagination.md",
+      "path": "sample-task/specs/SPEC-004-pagination.md",
+      "title": "SPEC-004 订单列表：分页（本任务新增）",
+      "symbols": [
+        "SPEC-002",
+        "SPEC-003",
+        "SPEC-004"
+      ],
+      "content": "PATH: sample-task/specs/SPEC-004-pagination.md\nKIND: spec\nTITLE: SPEC-004 订单列表：分页（本任务新增）\n\n# SPEC-004 订单列表：分页（本任务新增）\n\n- 规格 ID：SPEC-004\n- 类型：新增需求（本任务要实现）\n- 关联代码：`sample-app/order_service/orders.py` → `list_orders`\n- 关联测试：`sample-app/tests/test_target_feature.py` 中分页相关用例\n\n## 需求\n\n`list_orders(orders, page=..., page_size=...)`：\n\n1. `page` 与 `page_size` 都为空时不分页，行为与 SPEC-002 一致；\n2. 分页在筛选之后进行：先按 SPEC-003 过滤，再对结果切片；\n3. `page` 为从 1 开始的整数；`page_size` 为 1～100 的整数（含边界）；\n4. 以下情况抛出 `ValueError`：\n   - `page` 传入但小于 1 或不是整数；\n   - `page_size` 传入但小于 1、大于 100 或不是整数；\n   - 只传了其中一个参数（必须成对出现，除非两个都不传）；\n5. 页码超出结果范围时返回空列表（不报错）；\n6. 结果为空时返回空列表，不报错。\n\n## 验收\n\n- `page=2, page_size=2` 返回筛选结果的第 3、4 条；\n- `page=9, page_size=2` 返回空列表；\n- `page=0`、`page_size=0`、`page_size=101` 均抛出 `ValueError`；\n- 不传分页参数时结果与 SPEC-002 一致。\n\n## 兼容性\n\n- 分页不改变筛选与默认查询行为；\n- 不修改传入的订单集合。\n",
+      "score": 4.0,
+      "excerpt": "# SPEC-004 订单列表：分页（本任务新增）\n- 规格 ID：SPEC-004\n- 类型：新增需求（本任务要实现）\n- 关联代码：`sample-app/order_service/orders.py` → `list_orders`\n- 关联测试：`sample-app/tests/test_target_feature.py` 中分页相关用例\n## 需求"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-005-compatibility.md",
+      "path": "sample-task/specs/SPEC-005-compatibility.md",
+      "title": "SPEC-005 订单服务其他既有行为（回归约束）",
+      "symbols": [
+        "SPEC-005"
+      ],
+      "content": "PATH: sample-task/specs/SPEC-005-compatibility.md\nKIND: spec\nTITLE: SPEC-005 订单服务其他既有行为（回归约束）\n\n# SPEC-005 订单服务其他既有行为（回归约束）\n\n- 规格 ID：SPEC-005\n- 类型：既有行为（回归约束，不得破坏）\n- 关联代码：`sample-app/order_service/orders.py` → `create_order` / `advance_status` / `summarize_orders`\n- 关联测试：`sample-app/tests/test_regression.py`\n\n## 需求\n\n1. `create_order(order_id, customer, amount, status=\"pending\")`：\n   - `order_id`、`customer` 非空字符串，否则 `ValueError`；\n   - `amount` 为大于 0 的有限数值，否则 `ValueError`；\n   - `status` 必须是 `VALID_STATUSES` 之一，否则 `ValueError`；\n   - 默认状态为 `pending`。\n2. `advance_status(order, new_status)`：\n   - 状态流转按 `ALLOWED_TRANSITIONS`：pending→paid/cancelled，paid→shipped/cancelled，shipped/cancelled 为终态；\n   - 非法状态或非法流转抛出 `ValueError`；\n   - 返回新的 `Order`，不修改原对象。\n3. `summarize_orders(orders)`：\n   - 返回 `count`、`total_amount`（保留 2 位小数）、`by_status`（包含全部状态，无订单为 0）；\n   - 空输入返回 count=0、total_amount=0、各状态计数为 0。\n\n## 验收\n\n- 修改前后，`sample-app/tests/test_regression.py` 全部通过；\n- 不得通过修改预期结果或删除断言来让测试通过。\n",
+      "score": 4.0,
+      "excerpt": "# SPEC-005 订单服务其他既有行为（回归约束）\n- 规格 ID：SPEC-005\n- 类型：既有行为（回归约束，不得破坏）\n- 关联代码：`sample-app/order_service/orders.py` → `create_order` / `advance_status` / `summarize_orders`\n- 关联测试：`sample-app/tests/test_regression.py`\n## 需求"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-001-create.md",
+      "path": "sample-task/specs/SPEC-001-create.md",
+      "title": "SPEC-001 订单创建（既有行为，必须保持）",
+      "symbols": [
+        "SPEC-001",
+        "SPEC-005"
+      ],
+      "content": "PATH: sample-task/specs/SPEC-001-create.md\nKIND: spec\nTITLE: SPEC-001 订单创建（既有行为，必须保持）\n\n# SPEC-001 订单创建（既有行为，必须保持）\n\n- 规格 ID：SPEC-001\n- 类型：既有行为（回归约束）\n- 关联代码：`sample-app/order_service/orders.py` → `create_order` / `VALID_STATUSES`\n- 关联测试：`sample-app/tests/test_regression.py` 中创建相关用例\n\n## 需求\n\n`create_order(order_id, customer, amount, status=\"pending\")`：\n\n1. `order_id`、`customer` 必须是非空字符串；\n2. `amount` 必须是大于 0 的有限数值；\n3. `status` 必须是 `pending` / `paid` / `shipped` / `cancelled` 之一；\n4. 缺省状态为 `pending`；\n5. 校验失败抛出 `ValueError`。\n\n## 验收\n\n- 合法输入返回订单对象，字段与输入一致；\n- 非法输入（空 id、空 customer、非正金额、未知状态）均抛出 `ValueError`。\n\n## 兼容性\n\n属于 SPEC-005 回归约束的一部分，本任务不得修改其行为。\n",
+      "score": 4.0,
+      "excerpt": "# SPEC-001 订单创建（既有行为，必须保持）\n- 规格 ID：SPEC-001\n- 类型：既有行为（回归约束）\n- 关联代码：`sample-app/order_service/orders.py` → `create_order` / `VALID_STATUSES`\n- 关联测试：`sample-app/tests/test_regression.py` 中创建相关用例\n## 需求"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-002-list-default.md",
+      "path": "sample-task/specs/SPEC-002-list-default.md",
+      "title": "SPEC-002 订单列表：默认查询（既有行为，必须保持）",
+      "symbols": [
+        "SPEC-002",
+        "SPEC-003",
+        "SPEC-004"
+      ],
+      "content": "PATH: sample-task/specs/SPEC-002-list-default.md\nKIND: spec\nTITLE: SPEC-002 订单列表：默认查询（既有行为，必须保持）\n\n# SPEC-002 订单列表：默认查询（既有行为，必须保持）\n\n- 规格 ID：SPEC-002\n- 类型：既有行为（回归约束）\n- 关联代码：`sample-app/order_service/orders.py` → `list_orders`\n- 关联测试：`sample-app/tests/test_regression.py::test_list_orders_default_returns_all_in_creation_order`\n\n## 需求\n\n`list_orders(orders)` 在不传筛选/分页参数时：\n\n1. 返回全部订单，顺序与传入顺序一致（即创建顺序）；\n2. 不修改传入的订单集合；\n3. 返回新的列表对象，而不是原对象。\n\n## 验收\n\n- 传入 4 条订单，返回 4 条且 `order_id` 顺序不变；\n- 返回列表与原输入不是同一个对象。\n\n## 兼容性\n\n本规格是 SPEC-003 / SPEC-004 的兼容基线：新增参数不得改变默认行为。\n",
+      "score": 4.0,
+      "excerpt": "# SPEC-002 订单列表：默认查询（既有行为，必须保持）\n- 规格 ID：SPEC-002\n- 类型：既有行为（回归约束）\n- 关联代码：`sample-app/order_service/orders.py` → `list_orders`\n- 关联测试：`sample-app/tests/test_regression.py::test_list_orders_default_returns_all_in_creation_order`\n## 需求"
+    }
+  ],
+  "code": [
+    {
+      "doc_id": "code:sample-app/order_service/orders.py",
+      "path": "sample-app/order_service/orders.py",
+      "title": "代码：sample-app/order_service/orders.py",
+      "symbols": [
+        "Order",
+        "create_order",
+        "_is_int",
+        "_validate_pagination",
+        "list_orders",
+        "advance_status",
+        "summarize_orders"
+      ],
+      "content": "PATH: sample-app/order_service/orders.py\nKIND: code\nSYMBOLS: Order,create_order,_is_int,_validate_pagination,list_orders,advance_status,summarize_orders\n\n\"\"\"订单服务示例业务代码（SDD 上下文管理系统的“被修改对象”）。\n\n对应规格见 ``sample-task/specs/``。``list_orders`` 已实现 SPEC-003（按状态筛选）\n与 SPEC-004（分页），其余函数提供题目要求的“原有行为”，保持不变（SPEC-005）。\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass, field, replace\nfrom datetime import datetime, timezone\nfrom typing import Iterable\n\n# SPEC-001：订单状态取值\nVALID_STATUSES: tuple[str, ...] = (\"pending\", \"paid\", \"shipped\", \"cancelled\")\n\n# SPEC-005：状态流转规则（既有行为）\nALLOWED_TRANSITIONS: dict[str, set[str]] = {\n    \"pending\": {\"paid\", \"cancelled\"},\n    \"paid\": {\"shipped\", \"cancelled\"},\n    \"shipped\": set(),\n    \"cancelled\": set(),\n}\n\n\n@dataclass(frozen=True)\nclass Order:\n    \"\"\"一条订单记录。\"\"\"\n\n    order_id: str\n    customer: str\n    amount: float\n    status: str = \"pending\"\n    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))\n\n    def as_dict(self) -> dict:\n        \"\"\"返回用于展示/序列化的字典。\"\"\"\n        return {\n            \"order_id\": self.order_id,\n            \"customer\": self.customer,\n            \"amount\": self.amount,\n            \"status\": self.status,\n            \"created_at\": self.created_at.isoformat(),\n        }\n\n\ndef create_order(\n    order_id: str,\n    customer: str,\n    amount: float,\n    status: str = \"pending\",\n) -> Order:\n    \"\"\"创建订单（SPEC-001）。\n\n    - order_id / customer 必须是非空字符串\n    - amount 必须是大于 0 的有限数值\n    - status 必须是 VALID_STATUSES 之一\n    \"\"\"\n    if not isinstance(order_id, str) or not order_id.strip():\n        raise ValueError(\"order_id must be a non-empty string\")\n    if not isinstance(customer, str) or not customer.strip():\n        raise ValueError(\"customer must be a non-empty string\")\n    if not isinstance(amount, (int, float)) or isinstance(amount, bool):\n        raise ValueError(\"amount must be a number\")\n    if amount <= 0 or amount != amount or amount in (float(\"inf\"), float(\"-inf\")):\n        raise ValueError(\"amount must be a positive finite number\")\n    if status not in VALID_STATUSES:\n        raise ValueError(f\"unknown order status: {status!r}\")\n    return Order(\n        order_id=order_id.strip(),\n        customer=customer.strip(),\n        amount=float(amount),\n        status=status,\n    )\n\n\n# SPEC-004：分页参数取值范围（私有常量）\n_MIN_PAGE_SIZE = 1\n_MAX_PAGE_SIZE = 100\n\n\ndef _is_int(value: object) -> bool:\n    \"\"\"判断是否为整数（bool 不视为整数）。\"\"\"\n    return isinstance(value, int) and not isinstance(value, bool)\n\n\ndef _validate_pagination(\n    page: int | None, page_size: int | None\n) -> tuple[int, int] | None:\n    \"\"\"校验分页参数（SPEC-004）。\n\n    - ``page`` 必须是大于等于 1 的整数；\n    - ``page_size`` 必须是 1～100 之间的整数（含边界）；\n    - 两个参数必须成对出现（要么都传，要么都不传）；\n    - 非法参数抛出 ``ValueError``。\n\n    返回 ``(page, page_size)``；未分页时返回 ``None``。\n    \"\"\"\n    if page is not None:\n        if not _is_int(page):\n            raise ValueError(\"page must be an integer\")\n        if page < 1:\n            raise ValueError(\"page must be an integer greater than or equal to 1\")\n    if page_size is not None:\n        if not _is_int(page_size):\n            raise ValueError(\"page_size must be an integer\")\n        if not (_MIN_PAGE_SIZE <= page_size <= _MAX_PAGE_SIZE):\n            raise ValueError(\n                f\"page_size must be an integer between {_MIN_PAGE_SIZE} \"\n                f\"and {_MAX_PAGE_SIZE}\"\n            )\n    if (page is None) != (page_size is None):\n        raise ValueError(\"page and page_size must be provided together\")\n    if page is None or page_size is None:\n        return None\n    return page, page_size\n\n\ndef list_orders(\n    orders: Iterable[Order],\n    status: str | None = None,\n    page: int | None = None,\n    page_size: int | None = None,\n) -> list[Order]:\n    \"\"\"返回订单列表（SPEC-002 默认查询 + SPEC-003 状态筛选 + SPEC-004 分页）。\n\n    - ``status=None``（缺省）：返回全部订单，保持传入顺序（SPEC-002）；\n    - ``status`` 为合法状态：只返回状态匹配的订单，保持原有相对顺序（SPEC-003）；\n    - ``status`` 不在 ``VALID_STATUSES`` 中：抛出 ``ValueError``（SPEC-003）；\n    - ``page`` / ``page_size`` 成对出现时，在筛选结果上分页；页码从 1 开始，\n      ``page_size`` 取值 1～100；页码超出范围返回空列表（SPEC-004）。\n\n    始终返回新的列表对象，不修改传入的订单集合。\n    \"\"\"\n    if status is not None and status not in VALID_STATUSES:\n        raise ValueError(f\"unknown order status: {status!r}\")\n    pagination = _validate_pagination(page, page_size)\n\n    result = list(orders)\n    # SPEC-003：先筛选，保持原有相对顺序\n    if status is not None:\n        result = [order for order in result if order.status == status]\n    # SPEC-004：筛选后再分页；页码越界自然得到空列表\n    if pagination is not None:\n        current_page, size = pagination\n        start = (current_page - 1) * size\n        result = result[start : start + size]\n    return result\n\n\ndef advance_status(order: Order, new_status: str) -> Order:\n    \"\"\"推进订单状态（SPEC-005 既有行为）。\n\n    允许的流转见 ALLOWED_TRANSITIONS；非法状态或非法流转抛出 ValueError。\n    返回新的 Order，不修改原对象。\n    \"\"\"\n    if new_status not in VALID_STATUSES:\n        raise ValueError(f\"unknown order status: {new_status!r}\")\n    allowed = ALLOWED_TRANSITIONS.get(order.status, set())\n    if new_status not in allowed:\n        raise ValueError(f\"illegal transition: {order.status!r} -> {new_status!r}\")\n    return replace(order, status=new_status)\n\n\ndef summarize_orders(orders: Iterable[Order]) -> dict:\n    \"\"\"汇总订单（SPEC-005 既有行为）。\n\n    返回 {\"count\": 总数, \"total_amount\": 总金额（保留 2 位）, \"by_status\": 各状态计数}。\n    by_status 固定包含 VALID_STATUSES 中的全部状态（没有订单的状态计数为 0）。\n    \"\"\"\n    order_list = list(orders)\n    by_status = {status: 0 for status in VALID_STATUSES}\n    total = 0.0\n    for order in order_list:\n        by_status[order.status] += 1\n        total += order.amount\n    return {\n        \"count\": len(order_list),\n        \"total_amount\": round(total, 2),\n        \"by_status\": by_status,\n    }\n",
+      "score": 4.0,
+      "excerpt": "\"\"\"订单服务示例业务代码（SDD 上下文管理系统的“被修改对象”）。\n对应规格见 ``sample-task/specs/``。``list_orders`` 已实现 SPEC-003（按状态筛选）\n与 SPEC-004（分页），其余函数提供题目要求的“原有行为”，保持不变（SPEC-005）。\n\"\"\"\nfrom __future__ import annotations\nfrom dataclasses import dataclass, field, replace"
+    },
+    {
+      "doc_id": "code:sample-app/order_service/__init__.py",
+      "path": "sample-app/order_service/__init__.py",
+      "title": "代码：sample-app/order_service/__init__.py",
+      "symbols": [],
+      "content": "PATH: sample-app/order_service/__init__.py\nKIND: code\nSYMBOLS: \n\n\"\"\"订单服务示例包。\"\"\"\n\nfrom .orders import (\n    ALLOWED_TRANSITIONS,\n    VALID_STATUSES,\n    Order,\n    advance_status,\n    create_order,\n    list_orders,\n    summarize_orders,\n)\n\n__all__ = [\n    \"ALLOWED_TRANSITIONS\",\n    \"VALID_STATUSES\",\n    \"Order\",\n    \"advance_status\",\n    \"create_order\",\n    \"list_orders\",\n    \"summarize_orders\",\n]\n",
+      "score": 4.0,
+      "excerpt": "\"\"\"订单服务示例包。\"\"\"\nfrom .orders import (\nALLOWED_TRANSITIONS,\nVALID_STATUSES,\nOrder,\nadvance_status,"
+    }
+  ],
+  "tests": {
+    "target": [
+      {
+        "doc_id": "test:sample-app/tests/test_target_feature.py",
+        "path": "sample-app/tests/test_target_feature.py",
+        "title": "测试：test_target_feature.py",
+        "symbols": [
+          "_sample_orders",
+          "test_filter_returns_only_matching_status",
+          "test_filter_preserves_creation_order",
+          "test_filter_rejects_unknown_status",
+          "test_pagination_applies_after_filter",
+          "test_pagination_keeps_default_order_without_filter",
+          "test_pagination_page_beyond_range_returns_empty_list",
+          "test_pagination_validates_page",
+          "test_pagination_validates_page_size",
+          "test_status_and_pagination_combined_with_empty_result",
+          "test_default_call_behavior_unchanged"
+        ],
+        "content": "PATH: sample-app/tests/test_target_feature.py\nKIND: test\nSYMBOLS: _sample_orders,test_filter_returns_only_matching_status,test_filter_preserves_creation_order,test_filter_rejects_unknown_status,test_pagination_applies_after_filter,test_pagination_keeps_default_order_without_filter,test_pagination_page_beyond_range_returns_empty_list,test_pagination_validates_page,test_pagination_validates_page_size,test_status_and_pagination_combined_with_empty_result,test_default_call_behavior_unchanged\n\n\"\"\"目标功能测试（SPEC-003 / SPEC-004）。\n\n本次代码修改的目标：为 ``list_orders`` 实现按状态筛选与分页。\n这些用例在修改前应当失败（功能未实现），修改后必须全部通过。\n\"\"\"\n\nimport pytest\n\nfrom order_service import create_order, list_orders\n\n\ndef _sample_orders():\n    \"\"\"按创建顺序 o1..o5；其中 paid 状态的是 o2、o3。\"\"\"\n    return [\n        create_order(\"o1\", \"alice\", 10.0, \"pending\"),\n        create_order(\"o2\", \"bob\", 20.0, \"paid\"),\n        create_order(\"o3\", \"carol\", 30.0, \"paid\"),\n        create_order(\"o4\", \"dave\", 40.0, \"shipped\"),\n        create_order(\"o5\", \"erin\", 50.0, \"paid\"),\n    ]\n\n\ndef test_filter_returns_only_matching_status():\n    result = list_orders(_sample_orders(), status=\"paid\")\n    assert [o.order_id for o in result] == [\"o2\", \"o3\", \"o5\"]\n\n\ndef test_filter_preserves_creation_order():\n    result = list_orders(_sample_orders(), status=\"paid\")\n    order_ids = [o.order_id for o in result]\n    assert order_ids == sorted(order_ids, key=lambda x: int(x[1:]))\n\n\ndef test_filter_rejects_unknown_status():\n    with pytest.raises(ValueError):\n        list_orders(_sample_orders(), status=\"refunded\")\n\n\ndef test_pagination_applies_after_filter():\n    page2 = list_orders(_sample_orders(), status=\"paid\", page=2, page_size=2)\n    assert [o.order_id for o in page2] == [\"o5\"]\n\n\ndef test_pagination_keeps_default_order_without_filter():\n    result = list_orders(_sample_orders(), page=2, page_size=2)\n    assert [o.order_id for o in result] == [\"o3\", \"o4\"]\n\n\ndef test_pagination_page_beyond_range_returns_empty_list():\n    assert list_orders(_sample_orders(), page=9, page_size=2) == []\n\n\ndef test_pagination_validates_page():\n    with pytest.raises(ValueError):\n        list_orders(_sample_orders(), page=0)\n\n\ndef test_pagination_validates_page_size():\n    with pytest.raises(ValueError):\n        list_orders(_sample_orders(), page_size=0)\n    with pytest.raises(ValueError):\n        list_orders(_sample_orders(), page_size=101)\n\n\ndef test_status_and_pagination_combined_with_empty_result():\n    # 类型筛选后没有数据时返回空列表，而不是报错\n    assert list_orders(_sample_orders(), status=\"cancelled\", page=1, page_size=10) == []\n\n\ndef test_default_call_behavior_unchanged():\n    # SPEC-002 / SPEC-005：不传新增参数时行为与修改前一致\n    assert [o.order_id for o in list_orders(_sample_orders())] == [\n        \"o1\",\n        \"o2\",\n        \"o3\",\n        \"o4\",\n        \"o5\",\n    ]\n",
+        "score": 4.0,
+        "excerpt": "\"\"\"目标功能测试（SPEC-003 / SPEC-004）。\n本次代码修改的目标：为 ``list_orders`` 实现按状态筛选与分页。\n这些用例在修改前应当失败（功能未实现），修改后必须全部通过。\n\"\"\"\nimport pytest\nfrom order_service import create_order, list_orders"
+      }
+    ],
+    "regression": [
+      {
+        "doc_id": "test:sample-app/tests/test_regression.py",
+        "path": "sample-app/tests/test_regression.py",
+        "title": "测试：test_regression.py",
+        "symbols": [
+          "_sample_orders",
+          "test_create_order_defaults_to_pending",
+          "test_create_order_rejects_invalid_input",
+          "test_list_orders_default_returns_all_in_creation_order",
+          "test_advance_status_happy_path",
+          "test_advance_status_rejects_illegal_transition",
+          "test_advance_status_allows_cancel_from_pending_and_paid",
+          "test_summarize_orders",
+          "test_summarize_empty_orders",
+          "test_valid_statuses_are_the_expected_set"
+        ],
+        "content": "PATH: sample-app/tests/test_regression.py\nKIND: test\nSYMBOLS: _sample_orders,test_create_order_defaults_to_pending,test_create_order_rejects_invalid_input,test_list_orders_default_returns_all_in_creation_order,test_advance_status_happy_path,test_advance_status_rejects_illegal_transition,test_advance_status_allows_cancel_from_pending_and_paid,test_summarize_orders,test_summarize_empty_orders,test_valid_statuses_are_the_expected_set\n\n\"\"\"既有行为回归测试（SPEC-001 / SPEC-002 / SPEC-005）。\n\n这些用例在代码修改前后都必须全部通过，用于证明本次修改没有破坏原有行为。\n\"\"\"\n\nimport pytest\n\nfrom order_service import (\n    VALID_STATUSES,\n    advance_status,\n    create_order,\n    list_orders,\n    summarize_orders,\n)\n\n\ndef _sample_orders():\n    return [\n        create_order(\"o1\", \"alice\", 10.0, \"pending\"),\n        create_order(\"o2\", \"bob\", 20.5, \"paid\"),\n        create_order(\"o3\", \"carol\", 30.0, \"paid\"),\n        create_order(\"o4\", \"dave\", 40.25, \"shipped\"),\n    ]\n\n\ndef test_create_order_defaults_to_pending():\n    order = create_order(\"o1\", \"alice\", 9.9)\n    assert order.status == \"pending\"\n    assert order.amount == 9.9\n    assert order.order_id == \"o1\"\n    assert order.customer == \"alice\"\n\n\n@pytest.mark.parametrize(\n    \"kwargs\",\n    [\n        {\"order_id\": \"\", \"customer\": \"alice\", \"amount\": 1.0},\n        {\"order_id\": \"o1\", \"customer\": \"  \", \"amount\": 1.0},\n        {\"order_id\": \"o1\", \"customer\": \"alice\", \"amount\": 0},\n        {\"order_id\": \"o1\", \"customer\": \"alice\", \"amount\": -3},\n        {\"order_id\": \"o1\", \"customer\": \"alice\", \"amount\": 1.0, \"status\": \"refunded\"},\n    ],\n)\ndef test_create_order_rejects_invalid_input(kwargs):\n    with pytest.raises(ValueError):\n        create_order(**kwargs)\n\n\ndef test_list_orders_default_returns_all_in_creation_order():\n    orders = _sample_orders()\n    result = list_orders(orders)\n    assert [o.order_id for o in result] == [\"o1\", \"o2\", \"o3\", \"o4\"]\n    assert result is not orders\n\n\ndef test_advance_status_happy_path():\n    order = create_order(\"o1\", \"alice\", 1.0)\n    paid = advance_status(order, \"paid\")\n    assert paid.status == \"paid\"\n    shipped = advance_status(paid, \"shipped\")\n    assert shipped.status == \"shipped\"\n    # 原对象不变\n    assert order.status == \"pending\"\n    assert paid.status == \"paid\"\n\n\n@pytest.mark.parametrize(\n    \"current,new\",\n    [\n        (\"pending\", \"shipped\"),\n        (\"shipped\", \"paid\"),\n        (\"cancelled\", \"paid\"),\n        (\"pending\", \"refunded\"),\n    ],\n)\ndef test_advance_status_rejects_illegal_transition(current, new):\n    order = create_order(\"o1\", \"alice\", 1.0, current)\n    with pytest.raises(ValueError):\n        advance_status(order, new)\n\n\ndef test_advance_status_allows_cancel_from_pending_and_paid():\n    pending = create_order(\"o1\", \"alice\", 1.0)\n    assert advance_status(pending, \"cancelled\").status == \"cancelled\"\n    paid = advance_status(pending, \"paid\")\n    assert advance_status(paid, \"cancelled\").status == \"cancelled\"\n\n\ndef test_summarize_orders():\n    summary = summarize_orders(_sample_orders())\n    assert summary[\"count\"] == 4\n    assert summary[\"total_amount\"] == 100.75\n    assert summary[\"by_status\"] == {\n        \"pending\": 1,\n        \"paid\": 2,\n        \"shipped\": 1,\n        \"cancelled\": 0,\n    }\n\n\ndef test_summarize_empty_orders():\n    summary = summarize_orders([])\n    assert summary[\"count\"] == 0\n    assert summary[\"total_amount\"] == 0\n    assert summary[\"by_status\"] == {status: 0 for status in VALID_STATUSES}\n\n\ndef test_valid_statuses_are_the_expected_set():\n    assert set(VALID_STATUSES) == {\"pending\", \"paid\", \"shipped\", \"cancelled\"}\n",
+        "score": 4.0,
+        "excerpt": "\"\"\"既有行为回归测试（SPEC-001 / SPEC-002 / SPEC-005）。\n这些用例在代码修改前后都必须全部通过，用于证明本次修改没有破坏原有行为。\n\"\"\"\nimport pytest\nfrom order_service import (\nVALID_STATUSES,"
+      }
+    ]
+  },
+  "state": {
+    "task": "订单列表增加状态筛选与分页（SPEC-003 / SPEC-004）",
+    "done": [
+      "锁定任务与适用规格：SPEC-001 ~ SPEC-005 已导入 seekdb 并可检索",
+      "上下文模块生成任务上下文包，并交给 MiniMax M3.1 Flash 完成代码修改",
+      "目标功能测试修改前失败、修改后全部通过；回归测试修改前后均通过",
+      "验证结果已写入 PowerContext，可被 Module 重启后的新进程读取复用"
+    ],
+    "todo": [
+      "训练营评测提交并在提测记录中确认结果"
+    ],
+    "verifications": [
+      {
+        "name": "target-before",
+        "command": "cd sample-app && python -m pytest tests/test_target_feature.py -q",
+        "exit_code": 1,
+        "passed": false,
+        "code_sha": "8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729",
+        "recorded_at": "2026-10-29T10:55:30+08:00"
+      },
+      {
+        "name": "regression-before",
+        "command": "cd sample-app && python -m pytest tests/test_regression.py -q",
+        "exit_code": 0,
+        "passed": true,
+        "code_sha": "8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729",
+        "recorded_at": "2026-10-29T10:55:31+08:00"
+      },
+      {
+        "name": "target-after",
+        "command": "cd sample-app && python -m pytest tests/test_target_feature.py -q",
+        "exit_code": 0,
+        "passed": true,
+        "code_sha": "aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887",
+        "recorded_at": "2026-10-29T10:55:32+08:00"
+      },
+      {
+        "name": "regression-after",
+        "command": "cd sample-app && python -m pytest tests/test_regression.py -q",
+        "exit_code": 0,
+        "passed": true,
+        "code_sha": "aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887",
+        "recorded_at": "2026-10-29T10:55:33+08:00"
+      }
+    ],
+    "updated_at": "2026-10-29T10:55:34+08:00",
+    "_powercontext": {
+      "scope_id": "scp_2e17hr0h6spsttx1k0dx76c2qj",
+      "artifact_id": "art_754a81643028474aa91111fa44088d8a",
+      "revision": 1,
+      "url": "http://127.0.0.1:18080"
+    }
+  },
+  "state_note": "已从 PowerContext 读取任务状态",
+  "coverage": {
+    "referenced_spec_ids": [
+      "SPEC-001",
+      "SPEC-002",
+      "SPEC-003",
+      "SPEC-004",
+      "SPEC-005"
+    ],
+    "selected_spec_ids": [
+      "SPEC-001",
+      "SPEC-002",
+      "SPEC-003",
+      "SPEC-004",
+      "SPEC-005"
+    ],
+    "missing_spec_ids": [],
+    "specs": 5,
+    "code": 2,
+    "target_tests": 1,
+    "regression_tests": 1,
+    "ok": true
+  },
+  "scope": {
+    "scope_id": "scp_2e17hr0h6spsttx1k0dx76c2qj",
+    "title": "SDD 上下文任务",
+    "powercontext_url": "http://127.0.0.1:18080",
+    "created_at": "2026-10-29T10:55:22+08:00"
+  }
+}

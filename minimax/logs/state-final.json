@@ -1,0 +1,59 @@
+{
+  "task": "订单列表增加状态筛选与分页（SPEC-003 / SPEC-004）",
+  "done": [
+    "锁定任务与适用规格：SPEC-001 ~ SPEC-005 已导入 seekdb 并可检索",
+    "上下文模块生成任务上下文包，并交给 MiniMax M3.1 Flash 完成代码修改",
+    "目标功能测试修改前失败、修改后全部通过；回归测试修改前后均通过",
+    "验证结果已写入 PowerContext，可被 Module 重启后的新进程读取复用"
+  ],
+  "todo": [
+    "训练营评测提交并在提测记录中确认结果"
+  ],
+  "verifications": [
+    {
+      "name": "target-before",
+      "command": "cd sample-app && python -m pytest tests/test_target_feature.py -q",
+      "exit_code": 1,
+      "passed": false,
+      "code_sha": "8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729",
+      "recorded_at": "2026-10-29T10:55:30+08:00"
+    },
+    {
+      "name": "regression-before",
+      "command": "cd sample-app && python -m pytest tests/test_regression.py -q",
+      "exit_code": 0,
+      "passed": true,
+      "code_sha": "8112087d389edee44fe66d5c1d4713c43ca694d66502cc760ebc702749708729",
+      "recorded_at": "2026-10-29T10:55:31+08:00"
+    },
+    {
+      "name": "target-after",
+      "command": "cd sample-app && python -m pytest tests/test_target_feature.py -q",
+      "exit_code": 0,
+      "passed": true,
+      "code_sha": "aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887",
+      "recorded_at": "2026-10-29T10:55:32+08:00"
+    },
+    {
+      "name": "regression-after",
+      "command": "cd sample-app && python -m pytest tests/test_regression.py -q",
+      "exit_code": 0,
+      "passed": true,
+      "code_sha": "aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887",
+      "recorded_at": "2026-10-29T10:55:33+08:00"
+    }
+  ],
+  "updated_at": "2026-10-29T10:55:33+08:00",
+  "_powercontext": {
+    "scope_id": "scp_2e17hr0h6spsttx1k0dx76c2qj",
+    "artifact_id": "art_ef90db672c4c4586865860f01cfd2bdc",
+    "revision": 1,
+    "url": "http://127.0.0.1:18080"
+  },
+  "_saved": {
+    "artifact_id": "art_754a81643028474aa91111fa44088d8a",
+    "revision": 1,
+    "changed": true,
+    "saved_at": "2026-10-29T10:55:34+08:00"
+  }
+}

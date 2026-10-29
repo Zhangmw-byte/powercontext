@@ -1,0 +1,15 @@
+# SDD 上下文模块运行依赖（Python 3.11–3.14）
+#
+# 说明：
+# - pyseekdb 不写在这里，统一由 scripts/00_setup.sh 用 --no-deps 安装：
+#   Python 3.14 下 pyseekdb 的默认依赖会拉取 sentence-transformers/torch/CUDA（数 GB），
+#   本项目只使用 pyseekdb 的 embedded SQL 能力，不需要该默认 embedding 依赖。
+# - 以下依赖已在本机（Python 3.14.4）实际验证可运行。
+powercontext[cli,server]==1.4.1
+pylibseekdb==1.4.0.post2
+PyMySQL==1.2.0
+numpy==2.5.4
+tenacity==9.2.1
+tqdm==4.70.1
+httpx==0.28.1
+pytest==9.2.0

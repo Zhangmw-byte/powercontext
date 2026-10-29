@@ -1,0 +1,75 @@
+{
+  "minimax_dir": "/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax",
+  "runtime_dir": "/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime",
+  "seekdb_dir": "/home/gxp08/workspace/tasks/task-20261029-03-minimax-sdd-context/work/repo/minimax/.runtime/seekdb",
+  "database": "sdd",
+  "doc_counts": {
+    "code": 2,
+    "spec": 5,
+    "test": 2
+  },
+  "documents": [
+    {
+      "doc_id": "code:sample-app/order_service/orders.py",
+      "kind": "code",
+      "path": "sample-app/order_service/orders.py",
+      "sha256": "979cd263f59a7cf8a2ae553155e481fb9c320dd17bb06353e9dcdd13c59e032b"
+    },
+    {
+      "doc_id": "code:sample-app/order_service/__init__.py",
+      "kind": "code",
+      "path": "sample-app/order_service/__init__.py",
+      "sha256": "8dc45fd6f2151ce876fd974fbd1b000c03b7af094c1eaf2420cd90e4be1a1be8"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-001-create.md",
+      "kind": "spec",
+      "path": "sample-task/specs/SPEC-001-create.md",
+      "sha256": "81d640092bcfb4983cdebefbd4bf424d6cd6f769aca2625ee76e75c6f8d0ac5d"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-002-list-default.md",
+      "kind": "spec",
+      "path": "sample-task/specs/SPEC-002-list-default.md",
+      "sha256": "9fe13d29f6ae03ff2adb6dd89ce4b4ef32fd3182d049954a9240e9ead29d39da"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-003-filter.md",
+      "kind": "spec",
+      "path": "sample-task/specs/SPEC-003-filter.md",
+      "sha256": "b6a58dbd8404343a140057a9a890d4ea2e07d7b86209ea0423e1ec396161f1c3"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-004-pagination.md",
+      "kind": "spec",
+      "path": "sample-task/specs/SPEC-004-pagination.md",
+      "sha256": "bb424986e781d7d328aa321848d0ffa136c492c2558b688379b3373b7acacac3"
+    },
+    {
+      "doc_id": "spec:sample-task/specs/SPEC-005-compatibility.md",
+      "kind": "spec",
+      "path": "sample-task/specs/SPEC-005-compatibility.md",
+      "sha256": "6d88990a6bcb981b159753670e5c3b8315c9a2c7713c05f63349178e35f38837"
+    },
+    {
+      "doc_id": "test:sample-app/tests/test_regression.py",
+      "kind": "test",
+      "path": "sample-app/tests/test_regression.py",
+      "sha256": "cea9679ca4d1475cb47b55c694f797cacb5ed9e2d750fd41375def0d044849ea"
+    },
+    {
+      "doc_id": "test:sample-app/tests/test_target_feature.py",
+      "kind": "test",
+      "path": "sample-app/tests/test_target_feature.py",
+      "sha256": "6d6ebb503df0dceae74242a529df3fa67661726cb1cbda1078c6c43331d55d75"
+    }
+  ],
+  "powercontext_url": "http://127.0.0.1:18080",
+  "scope": {
+    "scope_id": "scp_2e17hr0h6spsttx1k0dx76c2qj",
+    "title": "SDD 上下文任务",
+    "powercontext_url": "http://127.0.0.1:18080",
+    "created_at": "2026-10-29T10:55:22+08:00"
+  },
+  "recent_queries": []
+}

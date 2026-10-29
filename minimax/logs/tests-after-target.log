@@ -1,0 +1,8 @@
+# 修改后测试：target（期望退出码 0）
+# command: cd sample-app && python -m pytest tests/test_target_feature.py -q -o addopts=''
+# code_version: sample-app/order_service/orders.py sha256=aaa2f4d17a51e255742f07cb644a1323fd0b492e9176586b93c541c2e1003887
+# python: Python 3.14.4
+# time: 2026-10-29T10:55:31+08:00
+..........                                                               [100%]
+10 passed in 0.01s
+# exit_code=0

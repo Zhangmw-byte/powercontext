@@ -1,0 +1,13 @@
+{
+  "task": "订单列表增加状态筛选与分页（SPEC-003 / SPEC-004）",
+  "done": [
+    "锁定任务与适用规格：SPEC-001 ~ SPEC-005 已导入 seekdb 并可检索",
+    "上下文模块已生成任务上下文包（规格 / 代码 / 测试 / 任务状态）"
+  ],
+  "todo": [
+    "把上下文包交给使用 MiniMax 的开发助手，修改 sample-app/order_service/orders.py 的 list_orders",
+    "运行目标功能测试与回归测试，确认修改前失败、修改后通过",
+    "保存验证结果到 PowerContext，并在模块重启后读取复用"
+  ],
+  "verifications": []
+}

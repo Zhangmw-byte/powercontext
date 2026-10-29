@@ -1,0 +1,17 @@
+# 生成: 2026-10-29 22:37:43 方式: docker run --rm -v $PWD:/work --entrypoint python langgenius/dify-api:1.13.3 /work/scripts/validate_dsl.py
+# 校验对象: workflows/memory-npc.yml（Dify 1.13.3 官方镜像内的 dify_graph pydantic 节点模型）
+# 注意: 该验证为节点 schema/图结构静态校验，不等同于界面导入+真实运行（见 docs/verification.md）
+root node: start (start)
+PASS start                    start
+PASS code_build_prepare       code
+PASS http_prepare             http-request
+PASS code_parse               code
+PASS if_saved                 if-else
+PASS end_saved                end
+PASS llm_reply                llm
+PASS code_build_commit        code
+PASS http_commit              http-request
+PASS code_format_result       code
+PASS end_committed            end
+
+OK: 11 nodes, 10 edges validated against Dify 1.13.3 dify_graph models

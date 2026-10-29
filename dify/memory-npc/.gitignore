@@ -1,0 +1,16 @@
+# 运行产物与本地状态，不提交
+.venv*/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 运行数据库与存档（PowerContext SQLite 等）
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# 真实密钥与日志
+.env
+*.log
+logs/

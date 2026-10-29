@@ -1,0 +1,10 @@
+[project]
+name = "npc-memory"
+version = "1.0.0"
+description = "Campus isekai library NPC memory service on Dify + PowerContext + OceanBase contest"
+requires-python = ">=3.12,<3.13"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]

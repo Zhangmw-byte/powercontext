@@ -1,0 +1,641 @@
+app:
+  description: 校园异世界图书馆管理员 NPC：所有回应仅基于 PowerContext 真实存档。
+  icon: 📚
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: memory-npc
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.26@bdf47cb41e9062bba00d26625d2a795c1874011d8ce64bff738c44b5a31787ea
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: code
+      id: start-source-code_build_prepare-target
+      source: start
+      sourceHandle: source
+      target: code_build_prepare
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: code_build_prepare-source-http_prepare-target
+      source: code_build_prepare
+      sourceHandle: source
+      target: http_prepare
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: http_prepare-source-code_parse-target
+      source: http_prepare
+      sourceHandle: source
+      target: code_parse
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: if-else
+      id: code_parse-source-if_saved-target
+      source: code_parse
+      sourceHandle: source
+      target: if_saved
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: end
+      id: if_saved-true-end_saved-target
+      source: if_saved
+      sourceHandle: 'true'
+      target: end_saved
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: if_saved-false-llm_reply-target
+      source: if_saved
+      sourceHandle: 'false'
+      target: llm_reply
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: llm_reply-source-code_build_commit-target
+      source: llm_reply
+      sourceHandle: source
+      target: code_build_commit
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: code_build_commit-source-http_commit-target
+      source: code_build_commit
+      sourceHandle: source
+      target: http_commit
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: http_commit-source-code_format_result-target
+      source: http_commit
+      sourceHandle: source
+      target: code_format_result
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: code_format_result-source-end_committed-target
+      source: code_format_result
+      sourceHandle: source
+      target: end_committed
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 输入玩家标识、从 1 递增的回合号与本轮行动。
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - label: player_id
+          max_length: 64
+          options: []
+          required: true
+          type: text-input
+          variable: player_id
+        - label: turn_no
+          max_length: 48
+          options: []
+          required: true
+          type: number
+          variable: turn_no
+        - label: action
+          max_length: 2000
+          options: []
+          required: true
+          type: paragraph
+          variable: action
+      height: 204
+      id: start
+      position:
+        x: 60
+        y: 282
+      positionAbsolute:
+        x: 60
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\n\ndef main(player_id: str, turn_no: float, action: str)\
+          \ -> dict:\n    return {\n        \"body\": json.dumps(\n            {\n\
+          \                \"player_id\": player_id,\n                \"turn_no\"\
+          : int(turn_no),\n                \"action\": action,\n            },\n \
+          \           ensure_ascii=False,\n        )\n    }\n"
+        code_language: python3
+        desc: 用 json.dumps 正确序列化 prepare 请求体（含中文与引号）。
+        outputs:
+          body:
+            children: null
+            type: string
+        selected: false
+        title: 组装 prepare 请求体
+        type: code
+        variables:
+        - value_selector:
+          - start
+          - player_id
+          variable: player_id
+        - value_selector:
+          - start
+          - turn_no
+          variable: turn_no
+        - value_selector:
+          - start
+          - action
+          variable: action
+      height: 95
+      id: code_build_prepare
+      position:
+        x: 364
+        y: 282
+      positionAbsolute:
+        x: 364
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - key: ''
+            type: text
+            value: '{{#code_build_prepare.body#}}'
+          type: json
+        desc: 只读查询存档；读取不会创建任何剧情记录。
+        headers: Content-Type:application/json
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          connect: 10
+          read: 30
+          write: 30
+        title: HTTP 读取存档 (prepare)
+        type: http-request
+        url: http://npc-memory:8877/v1/turns/prepare
+      height: 181
+      id: http_prepare
+      position:
+        x: 668
+        y: 282
+      positionAbsolute:
+        x: 668
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\n\ndef main(response_body: str) -> dict:\n    data =\
+          \ json.loads(response_body or \"{}\")\n    saved = data.get(\"saved_result\"\
+          ) or {}\n    revision = data.get(\"revision\", 0)\n    return {\n      \
+          \  \"has_saved_reply\": saved.get(\"reply\", \"\"),\n        \"saved_action_matches\"\
+          : \"true\" if saved.get(\"action_matches\") else \"false\",\n        \"\
+          history_context\": data.get(\"history_context\", \"\"),\n        \"expected_revision\"\
+          : int(revision),\n    }\n"
+        code_language: python3
+        desc: 解析 prepare 响应：已保存结果、修订版本与送入模型的历史窗口。
+        outputs:
+          expected_revision:
+            children: null
+            type: number
+          has_saved_reply:
+            children: null
+            type: string
+          history_context:
+            children: null
+            type: string
+          saved_action_matches:
+            children: null
+            type: string
+        selected: false
+        title: 解析 prepare 响应
+        type: code
+        variables:
+        - value_selector:
+          - http_prepare
+          - body
+          variable: response_body
+      height: 95
+      id: code_parse
+      position:
+        x: 972
+        y: 282
+      positionAbsolute:
+        x: 972
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not empty
+            id: cond_has_saved
+            value: ''
+            varType: string
+            variable_selector:
+            - code_parse
+            - has_saved_reply
+          - comparison_operator: is
+            id: cond_action_matches
+            value: 'true'
+            varType: string
+            variable_selector:
+            - code_parse
+            - saved_action_matches
+          id: 'true'
+          logical_operator: and
+        desc: 该回合已有已保存结果时直接返回原结果，不重复调用模型、不重复写入。
+        selected: false
+        title: 已有保存结果?
+        type: if-else
+      height: 233
+      id: if_saved
+      position:
+        x: 1276
+        y: 282
+      positionAbsolute:
+        x: 1276
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: 返回已保存的正式回复（原结果，幂等）。
+        outputs:
+        - value_selector:
+          - code_parse
+          - has_saved_reply
+          value_type: string
+          variable: npc_reply
+        - value_selector:
+          - start
+          - turn_no
+          value_type: number
+          variable: turn_no
+        selected: false
+        title: 结束（已保存结果）
+        type: end
+      height: 158
+      id: end_saved
+      position:
+        x: 1580
+        y: 120
+      positionAbsolute:
+        x: 1580
+        y: 120
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 仅依据真实存档生成剧情；凭据由使用者在界面配置。
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-v4-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_config:
+          jinja2_variables: []
+        prompt_template:
+        - id: sys-memory-npc
+          role: system
+          text: "你是校园异世界图书馆的管理员 NPC。玩家每次提交一个回合（player_id / turn_no / action）。\n规则：\n\
+            1. 只能依据【已保存的历史记录】回忆过去：玩家寄存的物品、约定的暗号、做过的选择。\n2. 历史中明确标注“无历史记录”时，你必须承认没有任何相关记录，严禁编造曾经发生的互动。\n\
+            3. 每轮输出三部分，按行标注：\n   NPC对话：<管理员的一句台词>\n   剧情反馈：<本轮行动带来的世界变化>\n   可选行动：A：<选项一>；B：<选项二>\n\
+            4. 不要输出 player_id、turn_no、revision、scope、数据库等实现细节；这些不是剧情内容。\n5. 使用中文。\n\
+            \n【已保存的历史记录】\n{{#code_parse.history_context#}}\n"
+        - id: user-action
+          role: user
+          text: '本轮玩家行动（第 {{#start.turn_no#}} 回合）：{{#start.action#}}
+
+            '
+        reasoning_format: separated
+        selected: false
+        title: LLM 生成剧情
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector: []
+          enabled: false
+      height: 131
+      id: llm_reply
+      position:
+        x: 1580
+        y: 320
+      positionAbsolute:
+        x: 1580
+        y: 320
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\n\ndef main(player_id: str, turn_no: float, action: str,\
+          \ reply: str, expected_revision: float) -> dict:\n    return {\n       \
+          \ \"body\": json.dumps(\n            {\n                \"player_id\": player_id,\n\
+          \                \"turn_no\": int(turn_no),\n                \"action\"\
+          : action,\n                \"reply\": reply,\n                \"expected_revision\"\
+          : int(expected_revision),\n            },\n            ensure_ascii=False,\n\
+          \        )\n    }\n"
+        code_language: python3
+        desc: 用 json.dumps 序列化含引号与多行内容的模型回复。
+        outputs:
+          body:
+            children: null
+            type: string
+        selected: false
+        title: 组装 commit 请求体
+        type: code
+        variables:
+        - value_selector:
+          - start
+          - player_id
+          variable: player_id
+        - value_selector:
+          - start
+          - turn_no
+          variable: turn_no
+        - value_selector:
+          - start
+          - action
+          variable: action
+        - value_selector:
+          - llm_reply
+          - text
+          variable: reply
+        - value_selector:
+          - code_parse
+          - expected_revision
+          variable: expected_revision
+      height: 95
+      id: code_build_commit
+      position:
+        x: 1884
+        y: 320
+      positionAbsolute:
+        x: 1884
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - key: ''
+            type: text
+            value: '{{#code_build_commit.body#}}'
+          type: json
+        desc: 写入 PowerContext；失败时工作流中断，不会产生假成功记录。
+        headers: 'Content-Type: application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        timeout:
+          connect: 10
+          read: 60
+          write: 30
+        title: HTTP 保存结果 (commit)
+        type: http-request
+        url: http://npc-memory:8877/v1/turns/commit
+      height: 181
+      id: http_commit
+      position:
+        x: 2188
+        y: 320
+      positionAbsolute:
+        x: 2188
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\n\ndef main(response_body: str) -> dict:\n    data =\
+          \ json.loads(response_body or \"{}\")\n    citation = data.get(\"citation\"\
+          ) or {}\n    return {\n        \"npc_reply\": data.get(\"reply\", \"\"),\n\
+          \        \"commit_status\": data.get(\"status\", \"\"),\n        \"replayed\"\
+          : str(data.get(\"replayed\", \"\")),\n        \"revision\": int(data.get(\"\
+          revision\", 0)),\n        \"citation_entry_id\": citation.get(\"entry_id\"\
+          ) or citation.get(\"committed_at\") or \"\",\n    }\n"
+        code_language: python3
+        desc: 提取保存成功的正式回复与引用信息。
+        outputs:
+          citation_entry_id:
+            children: null
+            type: string
+          commit_status:
+            children: null
+            type: string
+          npc_reply:
+            children: null
+            type: string
+          replayed:
+            children: null
+            type: string
+          revision:
+            children: null
+            type: number
+        selected: false
+        title: 解析 commit 响应
+        type: code
+        variables:
+        - value_selector:
+          - http_commit
+          - body
+          variable: response_body
+      height: 79
+      id: code_format_result
+      position:
+        x: 2492
+        y: 320
+      positionAbsolute:
+        x: 2492
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        desc: 返回已保存成功的正式回复（含保存状态与引用）。
+        outputs:
+        - value_selector:
+          - code_format_result
+          - npc_reply
+          value_type: string
+          variable: npc_reply
+        - value_selector:
+          - code_format_result
+          - commit_status
+          value_type: string
+          variable: commit_status
+        - value_selector:
+          - code_format_result
+          - revision
+          value_type: number
+          variable: memory_revision
+        selected: false
+        title: 结束（保存成功）
+        type: end
+      height: 184
+      id: end_committed
+      position:
+        x: 2796
+        y: 320
+      positionAbsolute:
+        x: 2796
+        y: 320
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: -2039.6710881266572
+      y: 28.591082808391178
+      zoom: 0.8040888484979245
+  rag_pipeline_variables: []

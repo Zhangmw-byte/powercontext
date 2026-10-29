@@ -1,0 +1,16 @@
+# 生成: 2026-10-29 22:25:28 命令: scripts/test.sh (真实 PowerContext SDK + SQLite, 临时数据库)
+/home/hp/powercontext-dify/dify/memory-npc/.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:300: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the "fixture" caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.12.16, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/hp/powercontext-dify/dify/memory-npc
+configfile: pyproject.toml
+plugins: anyio-4.15.1, asyncio-1.4.1, platformdirs-4.14.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 15 items
+
+tests/test_memory_service.py ...............                             [100%]
+
+======================== 15 passed in 96.00s (0:01:36) =========================

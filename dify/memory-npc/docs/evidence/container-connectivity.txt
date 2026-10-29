@@ -1,0 +1,29 @@
+# 生成: 2026-10-29 22:45:39  容器连通实测（真实运行输出）
+
+## 1. 宿主健康检查
+{"status":"ok","powercontext_url":"http://127.0.0.1:8878","powercontext_readiness":"ready","checks":{"runtime":"ready","database":"ready","artifact_processing_supervisor":"disabled","access_mode":"disabled","authentication_provider":"disabled","access_provider":"disabled","access_resource_kinds":"server,scope,artifact","access_artifact_families":"experience:enabled,handoff:enabled,memory:enabled,profile:enabled,prompt:enabled,skill:enabled"}}
+
+## 2. Dify api 容器直连 npc-memory（compose 网络）
+prepare: 200 scope_exists= False
+
+## 3. Dify HTTP Request 节点真实路径: api -> squid -> npc-memory
+prepare via squid: 200
+commit via squid: 200 committed
+重复 commit 幂等: already_committed replayed= True
+同回合不同行动: 409 turn_conflict
+
+## 4. squid 运行配置含本服务放行（仅 .conf 会被 include）
+# Included by the official squid template before its final `http_access deny all`.
+# Allows the Dify SSRF proxy to forward requests only to the npc-memory service.
+acl NPC_MEMORY dstdomain npc-memory
+http_access allow NPC_MEMORY
+## 5. 存档回查
+{"player_id":"evidence-squid","scope_exists":true,"scope_id":"scp_4446jhswyprpgfq97788ab7jz5","revision":1,"turn_count":1,"turns":[{"turn_no":1,"action":"寄存夜莺徽章","reply":"管理员：“已登记。”\n徽章放入第七格。","committed_at":"2026-10-29T14:45:40.716465+00:00","entry_version":1}]}
+
+## 6. scripts/restart-memory.sh 只重启记忆服务后，存档仍在
+npc-memory 已恢复: http://127.0.0.1:8877/healthz
+{"player_id":"evidence-squid","scope_exists":true,"scope_id":"scp_4446jhswyprpgfq97788ab7jz5","revision":1,"turn_count":1,"turns":[{"turn_no":1,"action":"寄存夜莺徽章","reply":"管理员：“已登记。”\n徽章放入第七格。","committed_at":"2026-10-29T14:45:40.716465+00:00","entry_ve
+
+## 7. scripts/down.sh -> up.sh 全栈重启后数据保留（未执行 down -v）
+down exit=0; /home/hp/difyfun-data/npc-memory 保留 powercontext.db(+wal/shm)
+up exit=0 后回查 evidence-squid 存档: turn_count=1, reply 完整恢复

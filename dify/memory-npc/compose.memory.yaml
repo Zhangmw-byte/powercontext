@@ -1,0 +1,44 @@
+# Companion services for the official Dify compose.
+# Use together with $HOME/dify-runtime-1.13.3/docker/docker-compose.yaml:
+#   docker compose -p difyfun -f docker-compose.yaml -f <this file> up -d
+# All host paths are injected by scripts/ (compose-relative paths would be
+# resolved against the first -f file's directory, so we use absolute env vars).
+services:
+  npc-memory:
+    build:
+      context: ${NPC_MEMORY_PROJECT_DIR:?set by scripts}
+      dockerfile: Dockerfile
+    image: npc-memory:1.0.0
+    container_name: ${NPC_MEMORY_CONTAINER_NAME:-npc-memory}
+    restart: always
+    environment:
+      NPC_MEMORY_PORT: "8877"
+      POWERCONTEXT_SERVER_URL: "http://127.0.0.1:8878"
+      NPC_MEMORY_HISTORY_WINDOW: "${NPC_MEMORY_HISTORY_WINDOW:-12}"
+      NPC_MEMORY_MAX_ACTION_CHARS: "${NPC_MEMORY_MAX_ACTION_CHARS:-2000}"
+      NPC_MEMORY_MAX_REPLY_CHARS: "${NPC_MEMORY_MAX_REPLY_CHARS:-8000}"
+    volumes:
+      - ${NPC_MEMORY_DATA_DIR:?set by scripts}:/data
+    ports:
+      - "${NPC_MEMORY_BIND_ADDR:-127.0.0.1}:8877:8877"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8877/healthz', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 90s
+
+  # Minimal SSRF exception: an explicit allow rule for exactly one destination,
+  # the npc-memory service (squid includes /etc/squid/conf.d/*.conf).
+  # Note: Dify 1.13.3's stock squid ships `http_access allow localnet` in
+  # conf.d/debian.conf, so container-network sources are already permitted;
+  # this rule is per-service hardening for stricter setups and disables nothing.
+  ssrf_proxy:
+    volumes:
+      - ${NPC_MEMORY_PROJECT_DIR:?set by scripts}/docker/squid-npc-memory.conf:/etc/squid/conf.d/10-npc-memory.conf:ro
+
+networks:
+  default:
+    name: ${COMPOSE_NETWORK_NAME:-difyfun_default}

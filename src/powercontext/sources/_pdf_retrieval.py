@@ -157,10 +157,55 @@ _EXPANSIONS = (
     (("returnonequity",), "net income earnings stockholders shareholders equity balance sheets"),
     (("interestcoverage",), "income statements operating income earnings interest expense"),
     (("research", "development", "r&d"), "research development expenses income operations"),
+    (
+        ("customer", "customers", "client", "clients"),
+        "customer customers accounted significant portion revenues sales government contracts major",
+    ),
+    (("cyclical", "cyclicality", "seasonal", "seasonality"), "cyclical cycles economic conditions demand downturn"),
+    (
+        ("acquisition", "acquisitions", "acquired", "acquire", "acquires"),
+        "acquisitions acquisition acquired divestitures business combinations purchase price",
+    ),
+    (("tax", "taxes"), "effective tax rate provision income taxes before"),
+    (("segment", "segments", "categories", "category"), "segment segments revenues business data total"),
+    (("products", "product", "services", "sells", "sell"), "products services segments offerings"),
+    (("industry", "industries"), "industry business markets products segments"),
+    (("growth", "grow", "grew"), "increase decrease change compared prior year percent"),
+    (("drove", "drive", "driven", "drivers"), "primarily due increase decrease compared prior year"),
 )
 
 _REPORT_YEAR = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
 _LEGAL_SUFFIXES = frozenset({"inc", "incorporated", "corp", "corporation", "company", "co", "ltd", "plc"})
+
+# Primary financial statements are recognized by a heading near the top of the
+# page plus the line items that define the statement. Headings are matched on
+# letters only, because PDF text extraction can split words ("incom e").
+_STATEMENT_HEADINGS = (
+    ("income", re.compile(r"statements?of(?:consolidated)?(?:income|operations|earnings)|incomestatements?")),
+    ("balance", re.compile(r"balancesheets?|statements?of(?:consolidated)?financial(?:position|condition)")),
+    ("cash", re.compile(r"statements?of(?:consolidated)?cashflows?|cashflows?statements?")),
+)
+_STATEMENT_LINE_ITEMS = {
+    "income": ((("revenue", "sales", "interestincome"), ("pershare", "netincome", "netearnings", "netloss")), 2),
+    "balance": ((("totalassets", "totalcurrentassets", "totalliabilities", "totalcurrentliabilities"),), 1),
+    "cash": (
+        (
+            ("operatingactivities", "netcashfromoperations"),
+            ("investingactivities", "netcashusedininvesting"),
+            ("financingactivities", "netcashusedinfinancing", "netcashfromfinancing"),
+        ),
+        2,
+    ),
+}
+_STATEMENT_HEADING_LETTERS = 240
+_STATEMENT_NUMERIC_SHARE = 0.25
+_STATEMENT_PAGES_PER_KIND = 2
+_BUSINESS_HEADING = re.compile(r"^\s*item\s*1\s*[.:]?\s*[-\u2013\u2014]?\s*business\b", re.IGNORECASE | re.MULTILINE)
+_ITEM_HEADING = re.compile(r"^\s*item\s*\d+[a-c]?\b", re.IGNORECASE | re.MULTILINE)
+_NAVIGATION_ITEMS = 4
+_BUSINESS_QUESTION = re.compile(
+    r"\b(?:products?|services?|sells?|geograph\w*|regions?|countries|operates?|industry|industries|customers?)\b"
+)
 
 
 class PDFMemory(Protocol):
@@ -172,12 +217,25 @@ class PDFMemory(Protocol):
 
 
 @dataclass(frozen=True)
+class _Statement:
+    kind: str
+    heading_position: int
+    numeric_share: float
+
+
+@dataclass(frozen=True)
 class _Page:
     record: MemoryEntryRecord
     identity: tuple[str, str]
     document: str
     body: str
     terms: Counter[str]
+    statement: _Statement | None
+    overview: bool
+
+    @classmethod
+    def of(cls, record: MemoryEntryRecord, identity: tuple[str, str], document: str, body: str) -> _Page:
+        return cls(record, identity, document, body, Counter(_tokens(body)), _statement(body), _overview(body))
 
 
 def _stem(word: str) -> str:
@@ -190,6 +248,28 @@ def _stem(word: str) -> str:
 
 def _tokens(text: str) -> list[str]:
     return [_stem(word) for word in _WORD.findall(unicodedata.normalize("NFKC", text).casefold()) if word not in _STOP]
+
+
+def _letters(text: str) -> str:
+    return re.sub(r"[^a-z]+", "", unicodedata.normalize("NFKC", text).casefold())
+
+
+def _statement(body: str) -> _Statement | None:
+    """Recognize an income statement, balance sheet or cash flow statement page."""
+    heading = _letters(body[:1500])[:_STATEMENT_HEADING_LETTERS]
+    found = [(match.start(), kind) for kind, pattern in _STATEMENT_HEADINGS if (match := pattern.search(heading))]
+    if not found:
+        return None
+    position, kind = min(found)
+    words = _WORD.findall(unicodedata.normalize("NFKC", body).casefold())
+    numeric_share = sum(word.isdigit() for word in words) / max(1, len(words))
+    if numeric_share < _STATEMENT_NUMERIC_SHARE:
+        return None
+    compact = _letters(body)
+    groups, required = _STATEMENT_LINE_ITEMS[kind]
+    if sum(any(item in compact for item in group) for group in groups) < required:
+        return None
+    return _Statement(kind, position, numeric_share)
 
 
 def _query(question: str) -> dict[str, float]:
@@ -247,7 +327,7 @@ def _pages(records: tuple[MemoryEntryRecord, ...]) -> list[_Page]:
         seen.add(identity)
         document, _, body = record.entry.text.partition("\n")
         if body.strip():
-            pages.append(_Page(record, identity, document, body, Counter(_tokens(body))))
+            pages.append(_Page.of(record, identity, document, body))
     return pages
 
 
@@ -283,7 +363,33 @@ def _heading_bonus(question: str, body: str) -> float:
     return score
 
 
-def _rank(pages: list[_Page], question: str, native_ranks: dict[str, int]) -> list[_Page]:
+def _primary_statements(pages: list[_Page], documents: list[str]) -> list[_Page]:
+    """Return the best-recognized statement pages of each kind for the given reports."""
+    candidates: dict[tuple[str, str], list[_Page]] = {}
+    for page in pages:
+        if page.statement is not None and page.document in documents:
+            candidates.setdefault((page.document, page.statement.kind), []).append(page)
+    chosen = []
+    for document in documents:
+        for kind, _ in _STATEMENT_HEADINGS:
+            ranked = sorted(
+                candidates.get((document, kind), ()),
+                key=lambda page: (page.statement.heading_position, -page.statement.numeric_share, page.identity),
+            )
+            chosen.extend(ranked[:_STATEMENT_PAGES_PER_KIND])
+    return chosen
+
+
+def _overview(body: str) -> bool:
+    """Recognize the opening page of a report's business description, not a table of contents."""
+    return bool(_BUSINESS_HEADING.search(body)) and len(_ITEM_HEADING.findall(body)) < _NAVIGATION_ITEMS
+
+
+def _bm25(count: int, length: int, average: float) -> float:
+    return count * 2.2 / (count + 1.2 * (0.25 + 0.75 * length / max(1.0, average)))
+
+
+def _rank(pages: list[_Page], question: str, native_ranks: dict[str, int], limit: int) -> list[_Page]:
     pages = _select_reports(pages, question)
     query = _query(question)
     if not query:
@@ -300,8 +406,7 @@ def _rank(pages: list[_Page], question: str, native_ranks: dict[str, int]) -> li
     for page, length in zip(pages, lengths, strict=True):
         score = 0.0
         for term, weight in query.items():
-            count = page.terms[term]
-            score += weight * idf[term] * count * 2.2 / (count + 1.2 * (0.25 + 0.75 * length / max(1, average)))
+            score += weight * idf[term] * _bm25(page.terms[term], length, average)
         heading_bonus = _heading_bonus(question, page.body)
         if score <= 0 and heading_bonus <= 0:
             continue
@@ -321,7 +426,36 @@ def _rank(pages: list[_Page], question: str, native_ranks: dict[str, int]) -> li
             score *= 0.35
         scored.append((score, page))
     scored.sort(key=lambda value: (-value[0], value[1].identity))
-    return [page for _, page in scored]
+    ranked = [page for _, page in scored]
+    scores = {page.identity: value for value, page in scored}
+    reserved = _reserved_pages(pages, ranked, scores, question, limit)
+    lexical = [page for page in ranked if page.identity not in reserved][: limit - len(reserved)]
+    return sorted([*lexical, *reserved.values()], key=lambda page: (-scores.get(page.identity, 0.0), page.identity))
+
+
+def _reserved_pages(
+    pages: list[_Page], ranked: list[_Page], scores: dict[tuple[str, str], float], question: str, limit: int
+) -> dict[tuple[str, str], _Page]:
+    """Choose structural pages of the targeted reports that lexical overlap tends to miss.
+
+    FinanceBench-style questions about a report are most often answered from its
+    primary statements, even when the question names a derived metric or a
+    qualitative property instead of a statement line item. Questions about what a
+    company sells, where and to whom are answered in its business description,
+    whose opening page names few query terms. Both take a bounded share of the result.
+    """
+    documents = sorted({page.document for page in pages})
+    if len(documents) > 2:
+        documents = [ranked[0].document] if ranked else []
+    reserved = {page.identity: page for page in _primary_statements(pages, documents)[: limit // 3]}
+    if not _BUSINESS_QUESTION.search(question.casefold()):
+        return reserved
+    for document in documents:
+        candidates = [page for page in pages if page.overview and page.document == document]
+        if candidates and len(reserved) < limit // 2:
+            best = min(candidates, key=lambda page: (-scores.get(page.identity, 0.0), page.identity))
+            reserved.setdefault(best.identity, best)
+    return reserved
 
 
 async def retrieve_pdf_pages(memory: PDFMemory, question: str, limit: int) -> tuple[MemoryCitation, ...]:
@@ -345,4 +479,4 @@ async def retrieve_pdf_pages(memory: PDFMemory, question: str, limit: int) -> tu
     native_ranks = (
         {hit.entry_id: i for i, hit in enumerate(found.hits)} if found.memory_ref == current.memory_ref else {}
     )
-    return tuple(page.record.citation for page in _rank(pages, question, native_ranks)[:limit])
+    return tuple(page.record.citation for page in _rank(pages, question, native_ranks, limit))

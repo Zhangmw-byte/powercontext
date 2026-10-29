@@ -1733,7 +1733,9 @@ class RememberMemoryRequest(BaseModel):
     )
     scope_id: Annotated[StrictStr, Field(max_length=256, min_length=1, pattern=".*\\S.*")]
     kind: Annotated[StrictStr, Field(max_length=128, min_length=1)]
-    text: Annotated[StrictStr, Field(description="Must not exceed 8192 UTF-8 bytes after normalization.", min_length=1)]
+    text: Annotated[
+        StrictStr, Field(description="Must not exceed 32768 UTF-8 bytes after normalization.", min_length=1)
+    ]
     reason: Annotated[StrictStr | None, Field(max_length=512)] = None
     expected_revision: Annotated[StrictInt | None, Field(ge=1)] = None
 
@@ -1764,7 +1766,9 @@ class ReviseMemoryEntryRequest(BaseModel):
     scope_id: Annotated[StrictStr, Field(max_length=256, min_length=1, pattern=".*\\S.*")]
     citation: MemoryCitation
     kind: Annotated[StrictStr, Field(max_length=128, min_length=1)]
-    text: Annotated[StrictStr, Field(description="Must not exceed 8192 UTF-8 bytes after normalization.", min_length=1)]
+    text: Annotated[
+        StrictStr, Field(description="Must not exceed 32768 UTF-8 bytes after normalization.", min_length=1)
+    ]
     reason: Annotated[StrictStr | None, Field(max_length=512)] = None
 
 
@@ -1877,7 +1881,7 @@ class CreateMemoryArtifactEntry(BaseModel):
         StrictStr,
         Field(
             description="Durable non-empty Memory entry text used to create the Entry Version and search projection.",
-            max_length=8192,
+            max_length=32768,
             min_length=1,
             pattern=".*\\S.*",
         ),

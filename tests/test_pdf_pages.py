@@ -5,9 +5,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 from hashlib import sha256
+from typing import Any, cast
 
 import pytest
 from pypdf import PdfWriter
@@ -162,52 +164,61 @@ def test_long_unicode_ids_are_preserved_and_tuple_identities_do_not_collide():
     assert values[0].document_id == " report "
 
 
-async def test_source_definition_projection_roundtrip_and_document_revisions():
-    registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
-    first = parse_pdf_document(PDFDocumentInput(document_id="doc", content=_pdf("Original table 100.", title="one")))[0]
-    second = parse_pdf_document(PDFDocumentInput(document_id="doc", content=_pdf("Original table 100.", title="two")))[
-        0
-    ]
-    original, revised = await registry.resolve(first), await registry.resolve(second)
-    assert original.materialization == SourceMaterialization.CAPTURED and original.definition_version == "1"
-    assert original.name != revised.name
-    assert await registry.read(original) == first
-    assert PDFPageSource.model_validate_json(original.model_dump_json()) == original
-    observation = project_source_for_transport(registry, original)
-    text = observation.projection(TEXT_EVIDENCE_PROJECTION_KEY)
-    assert text == {
-        "source_type": "pdf-page",
-        "source_id": original.name,
-        "content": "doc\n" + first.text,
-        "metadata": {"document_id": "doc", "document_sha256": first.document_sha256, "page_number": 1},
-    }
-    payload = json.loads(original.model_dump_json())
-    payload["name"] = "pdf:wrong"
-    with pytest.raises(ValueError):
-        PDFPageSource.model_validate_json(json.dumps(payload))
+def test_source_definition_projection_roundtrip_and_document_revisions():
+    async def scenario():
+        registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
+        first = parse_pdf_document(
+            PDFDocumentInput(document_id="doc", content=_pdf("Original table 100.", title="one"))
+        )
+        second = parse_pdf_document(
+            PDFDocumentInput(document_id="doc", content=_pdf("Original table 100.", title="two"))
+        )
+        original, revised = await registry.resolve(first[0]), await registry.resolve(second[0])
+        assert original.materialization == SourceMaterialization.CAPTURED and original.definition_version == "1"
+        assert original.name != revised.name
+        assert await registry.read(original) == first[0]
+        assert PDFPageSource.model_validate_json(original.model_dump_json()) == original
+        observation = project_source_for_transport(registry, original)
+        text = observation.projection(TEXT_EVIDENCE_PROJECTION_KEY)
+        assert text == {
+            "source_type": "pdf-page",
+            "source_id": original.name,
+            "content": "doc\n" + first[0].text,
+            "metadata": {"document_id": "doc", "document_sha256": first[0].document_sha256, "page_number": 1},
+        }
+        payload = json.loads(original.model_dump_json())
+        payload["name"] = "pdf:wrong"
+        with pytest.raises(ValueError):
+            PDFPageSource.model_validate_json(json.dumps(payload))
+
+    asyncio.run(scenario())
 
 
-async def test_original_page_source_remains_readable_after_persistence_reopen(tmp_path):
-    registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
-    originals = parse_pdf_document(PDFDocumentInput(document_id="doc", content=_pdf("Income table 200.", "")))
-    repository = SourceRepository(registry)
-    config = SQLiteConfig(url=f"sqlite+aiosqlite:///{tmp_path / 'source.db'}")
-    sources = [await registry.resolve(page) for page in originals]
-    async with (
-        SQLiteProfile.open(config, tables=SHARED_TABLES) as profile,
-        profile.database.transaction() as connection,
-    ):
-        for source in sources:
-            await repository.add(connection, "scope", source)
-        await repository.add(connection, "scope", sources[0])
-        assert await repository.journal_position(connection, "scope") == 2
-    async with (
-        SQLiteProfile.open(config, tables=SHARED_TABLES) as profile,
-        profile.database.transaction() as connection,
-    ):
-        for source, page in zip(sources, originals, strict=True):
-            stored = await repository.get(connection, "scope", SourceRef(source_type="pdf-page", source_id=source.name))
-            assert await registry.read(stored.value) == page
+def test_original_page_source_remains_readable_after_persistence_reopen(tmp_path):
+    async def scenario():
+        registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
+        originals = parse_pdf_document(PDFDocumentInput(document_id="doc", content=_pdf("Income table 200.", "")))
+        repository = SourceRepository(registry)
+        config = SQLiteConfig(url=f"sqlite+aiosqlite:///{tmp_path / 'source.db'}")
+        sources = [await registry.resolve(page) for page in originals]
+        async with (
+            SQLiteProfile.open(config, tables=SHARED_TABLES) as profile,
+            profile.database.transaction() as connection,
+        ):
+            for source in sources:
+                await repository.add(connection, "scope", source)
+            await repository.add(connection, "scope", sources[0])
+            assert await repository.journal_position(connection, "scope") == 2
+        async with (
+            SQLiteProfile.open(config, tables=SHARED_TABLES) as profile,
+            profile.database.transaction() as connection,
+        ):
+            for source, page in zip(sources, originals, strict=True):
+                reference = SourceRef(source_type="pdf-page", source_id=source.name)
+                stored = await repository.get(connection, "scope", reference)
+                assert await registry.read(stored.value) == page
+
+    asyncio.run(scenario())
 
 
 class _LiteralPipeline:
@@ -222,68 +233,78 @@ class _LiteralPipeline:
         )
 
 
-async def test_real_scoped_search_restart_distinct_pages_citations_and_current_state(tmp_path):
-    config = BuiltinConfig(database=SQLiteConfig(url=f"sqlite+aiosqlite:///{tmp_path / 'runtime.db'}"))
-    registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
-    pages = parse_pdf_document(
-        PDFDocumentInput(
-            document_id="ACME_2022_10K",
-            content=_pdf(
-                "General administrative history and employee meeting agenda.",
-                "Consolidated Statements of Cash Flows. Capital expenditures for 2022 were 123. Depreciation was 45.",
-                "",
-                "Legal Proceedings. Litigation was settled in 2022 for 10.",
-                "Geographic operations include North America, Europe and Asia Pacific.",
-            ),
+def test_real_scoped_search_restart_distinct_pages_citations_and_current_state(tmp_path):
+    async def scenario():
+        config = BuiltinConfig(database=SQLiteConfig(url=f"sqlite+aiosqlite:///{tmp_path / 'runtime.db'}"))
+        registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
+        pages = parse_pdf_document(
+            PDFDocumentInput(
+                document_id="ACME_2022_10K",
+                content=_pdf(
+                    "General administrative history and employee meeting agenda.",
+                    "Consolidated Statements of Cash Flows. Capital expenditures for 2022 were 123. Depreciation was 45.",
+                    "",
+                    "Legal Proceedings. Litigation was settled in 2022 for 10.",
+                    "Geographic operations include North America, Europe and Asia Pacific.",
+                ),
+            )
         )
-    )
-    observations = [project_source_for_transport(registry, await registry.resolve(page)) for page in pages]
-    async with open_builtin_runtime(config, candidate_pipeline=_LiteralPipeline()) as runtime:
-        scope = await runtime.scopes.create(ScopeDraft(title="Report", summary="Evidence", idempotency_key="report"))
-        other = await runtime.scopes.create(ScopeDraft(title="Other", summary="Isolated", idempotency_key="other"))
-        await runtime.ingestion.register(manifest_for_definition(PDF_PAGE_SOURCE_DEFINITION))
-        for observation in observations:
-            await runtime.ingestion.submit(SubmitSourceObservation(scope_id=scope.scope_id, observation=observation))
-        await runtime.ingestion.submit(SubmitSourceObservation(scope_id=scope.scope_id, observation=observations[0]))
-        memory = runtime.memory.for_scope(scope.scope_id)
-        while (await memory.flush()).processed:
-            pass
-        assert await search_pdf_pages(runtime.memory.for_scope(other.scope_id), "capital expenditure", 20) == ()
-    async with open_builtin_contexts(config) as contexts:
-        journal = await (await contexts.get(scope.scope_id)).sources.journal.entries()
-        assert len(journal) == 5
-    async with open_builtin_runtime(config) as runtime:
-        memory = runtime.memory.for_scope(scope.scope_id)
-        question = "How much did Acme spend on capital expenditures for 2022?"
-        citations = await search_pdf_pages(memory, question, limit=20)
-        assert citations and citations == await search_pdf_pages(memory, question, limit=20)
-        assert len(citations) <= 20
-        source_pages = {observation.name: page for observation, page in zip(observations, pages, strict=True)}
-        seen = set()
-        for citation in citations:
-            record = await memory.get(GetMemoryEntryRequest(citation=citation))
-            assert len(record.entry.sources) == 1
-            original = source_pages[record.entry.sources[0].source_id]
-            assert record.entry.text == (original.document_id + "\n" + original.text).strip()
-            assert original.page_number not in seen
-            seen.add(original.page_number)
-        best = await memory.get(GetMemoryEntryRequest(citation=citations[0]))
-        assert best.entry.sources[0].source_id == observations[1].name
-        for query, expected_source in (
-            ("What legal battles did Acme disclose?", observations[3].name),
-            ("Which geographies does Acme operate in?", observations[4].name),
-        ):
-            selected = await search_pdf_pages(memory, query, 1)
-            assert len(selected) == 1
-            exact = await memory.get(GetMemoryEntryRequest(citation=selected[0]))
-            assert exact.entry.sources[0].source_id == expected_source
-        assert await search_pdf_pages(memory, question, 0) == ()
-        await memory.retire(RetireMemoryEntryRequest(citation=citations[0]))
-        remaining = await search_pdf_pages(memory, question, 20)
-        assert all(c.entry_id != citations[0].entry_id for c in remaining)
+        observations = [project_source_for_transport(registry, await registry.resolve(page)) for page in pages]
+        async with open_builtin_runtime(config, candidate_pipeline=_LiteralPipeline()) as runtime:
+            assert runtime.scopes is not None
+            scope = await runtime.scopes.create(
+                ScopeDraft(title="Report", summary="Evidence", idempotency_key="report")
+            )
+            other = await runtime.scopes.create(ScopeDraft(title="Other", summary="Isolated", idempotency_key="other"))
+            await runtime.ingestion.register(manifest_for_definition(PDF_PAGE_SOURCE_DEFINITION))
+            for observation in observations:
+                await runtime.ingestion.submit(
+                    SubmitSourceObservation(scope_id=scope.scope_id, observation=observation)
+                )
+            await runtime.ingestion.submit(
+                SubmitSourceObservation(scope_id=scope.scope_id, observation=observations[0])
+            )
+            memory = runtime.memory.for_scope(scope.scope_id)
+            while (await memory.flush()).processed:
+                pass
+            assert await search_pdf_pages(runtime.memory.for_scope(other.scope_id), "capital expenditure", 20) == ()
+        async with open_builtin_contexts(config) as contexts:
+            journal = await (await contexts.get(scope.scope_id)).sources.journal.entries()
+            assert len(journal) == 5
+        async with open_builtin_runtime(config) as runtime:
+            memory = runtime.memory.for_scope(scope.scope_id)
+            question = "How much did Acme spend on capital expenditures for 2022?"
+            citations = await search_pdf_pages(memory, question, limit=20)
+            assert citations and citations == await search_pdf_pages(memory, question, limit=20)
+            assert len(citations) <= 20
+            source_pages = {observation.name: page for observation, page in zip(observations, pages, strict=True)}
+            seen = set()
+            for citation in citations:
+                record = await memory.get(GetMemoryEntryRequest(citation=citation))
+                assert len(record.entry.sources) == 1
+                original = source_pages[record.entry.sources[0].source_id]
+                assert record.entry.text == (original.document_id + "\n" + original.text).strip()
+                assert original.page_number not in seen
+                seen.add(original.page_number)
+            best = await memory.get(GetMemoryEntryRequest(citation=citations[0]))
+            assert best.entry.sources[0].source_id == observations[1].name
+            for query, expected_source in (
+                ("What legal battles did Acme disclose?", observations[3].name),
+                ("Which geographies does Acme operate in?", observations[4].name),
+            ):
+                selected = await search_pdf_pages(memory, query, 1)
+                assert len(selected) == 1
+                exact = await memory.get(GetMemoryEntryRequest(citation=selected[0]))
+                assert exact.entry.sources[0].source_id == expected_source
+            assert await search_pdf_pages(memory, question, 0) == ()
+            await memory.retire(RetireMemoryEntryRequest(citation=citations[0]))
+            remaining = await search_pdf_pages(memory, question, 20)
+            assert all(c.entry_id != citations[0].entry_id for c in remaining)
+
+    asyncio.run(scenario())
 
 
 @pytest.mark.parametrize("question, limit", [(" ", 20), (None, 20), ("report", True), ("report", 1.5), ("report", -1)])
-async def test_invalid_search_requests_fail_before_reading_memory(question, limit):
+def test_invalid_search_requests_fail_before_reading_memory(question, limit):
     with pytest.raises(ValueError):
-        await search_pdf_pages(None, question, limit)
+        asyncio.run(search_pdf_pages(cast(Any, None), question, limit))

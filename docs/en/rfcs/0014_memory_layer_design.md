@@ -553,8 +553,8 @@ than once, and only the first of identical new
 entries is retained. `reason` uses the same normalization and length validation as `MemoryChange.reason`. The reason on
 an explicit input is copied into its add or revise change. A candidate generator with no reliable reason must use
 `None` rather than invent one. After NFC and surrounding-whitespace normalization, `text` must be non-empty and no more
-than 8192 bytes when encoded as UTF-8. This limit also ensures that the OceanBase `TEXT` full-text column can hold the
-tokens derived by analyzer v1.
+than 32768 bytes when encoded as UTF-8, enough for one complete physical page of a dense report. The relational
+`MEDIUMTEXT` full-text column holds the tokens that analyzer v1 derives from an entry of that size.
 
 ## remember()
 

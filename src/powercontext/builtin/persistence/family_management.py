@@ -59,6 +59,7 @@ from powercontext.builtin.records import (
     ArtifactAlreadyExistsError,
     InvalidBaseAccessRequestError,
 )
+from powercontext.limits import MAX_MEMORY_ENTRY_TEXT_BYTES
 from powercontext.sources import SourceRef
 
 IdFactory = Callable[[str], str]
@@ -72,7 +73,7 @@ class MemoryCreateEntry(_ManagementValue):
     """One explicit entry supplied by a direct Memory Create command."""
 
     kind: Annotated[str, Field(min_length=1, max_length=128)]
-    text: Annotated[str, Field(min_length=1, max_length=8192)]
+    text: Annotated[str, Field(min_length=1, max_length=MAX_MEMORY_ENTRY_TEXT_BYTES)]
 
     @field_validator("kind")
     @classmethod

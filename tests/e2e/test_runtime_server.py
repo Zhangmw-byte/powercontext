@@ -982,7 +982,7 @@ def test_runtime_server_rejects_non_strict_transport_values(tmp_path: Path) -> N
             ),
             transport.post(
                 "/v1/memory/remember",
-                json={"scope_id": scope_id, "kind": "decision", "text": "🧠" * 3_000},
+                json={"scope_id": scope_id, "kind": "decision", "text": "🧠" * 9_000},
             ),
         ]
 
@@ -990,7 +990,7 @@ def test_runtime_server_rejects_non_strict_transport_values(tmp_path: Path) -> N
     assert {response.json()["error"]["code"] for response in responses} == {"invalid_request"}
 
 
-@pytest.mark.parametrize("text", ["a" * 8_193, "界" * 2_731, "🧠" * 2_049], ids=["ascii", "chinese", "emoji"])
+@pytest.mark.parametrize("text", ["a" * 32_769, "界" * 10_923, "🧠" * 8_193], ids=["ascii", "chinese", "emoji"])
 def test_runtime_server_returns_canonical_memory_error_details(tmp_path: Path, text: str) -> None:
     app = create_server_app(settings=_server_settings(tmp_path / "runtime.db"))
 
@@ -1029,7 +1029,7 @@ def test_runtime_server_returns_canonical_memory_error_details(tmp_path: Path, t
         "message": "The request is invalid.",
         "details": {
             "code": "text-too-long",
-            "message": "memory entry text must not exceed 8192 UTF-8 bytes",
+            "message": "memory entry text must not exceed 32768 UTF-8 bytes",
         },
     }
     assert [response.status_code for response in responses] == [422, 422]

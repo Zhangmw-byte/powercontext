@@ -26,6 +26,10 @@ MAX_SCOPE_BINDING_EXTERNAL_ID_LENGTH = 256
 MAX_SOURCE_ID_LENGTH = 256
 MAX_SOURCE_TYPE_LENGTH = 128
 MAX_SOURCE_OBSERVATION_BYTES = 4 * 1024 * 1024
+# One durable Memory entry body, measured in UTF-8 bytes after normalization. It holds
+# one complete physical page of a dense financial report and still fits the largest
+# prepared-context budget.
+MAX_MEMORY_ENTRY_TEXT_BYTES = 32 * 1024
 MAX_ARTIFACT_FAMILY_LENGTH = 128
 MAX_ARTIFACT_ID_LENGTH = 128
 MAX_BINDING_NAME_LENGTH = 128

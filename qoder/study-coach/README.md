@@ -2,6 +2,8 @@
 
 Qoder × OceanBase 2026 比赛项目 · 分支 `feat/qoder-study-coach`
 
+项目展示网站(公开访问,本地运行版介绍,无在线体验入口):**<https://review-memory-coach-jp71o4oh6tu.qoder.zone>**
+
 把不同学习者的**学习偏好**、**薄弱知识点**和**复习进度**写入 [PowerContext] 的真实 SQLite 持久化后端;服务重启后继续读取这些记忆,并依据掌握程度与每日学习时间生成复习清单。全部功能离线运行,不依赖任何大模型或外部 API Key。
 
 ## 特性
@@ -85,7 +87,8 @@ qoder/study-coach/
 ├── static/             # 中文单页前端(index.html / app.js / style.css)
 ├── tests/test_app.py   # 集成与单元测试(临时数据库)
 ├── scripts/            # prepare.sh / test.sh / start.sh
-├── docs/               # requirements / development / verification / evidence(截图)
+├── docs/               # requirements / development / verification / submission / evidence(截图)
+├── web/                # 已发布的 Qoder Sites 展示网站静态源码(index.html / style.css / assets)
 ├── pyproject.toml      # 依赖配置
 └── uv.lock             # 锁定依赖
 ```
@@ -111,6 +114,7 @@ qoder/study-coach/
 - 开发说明:`docs/development.md`
 - 验证报告:`docs/verification.md`
 - 证据材料:`docs/evidence/`
+- 提交材料与发布网址:`docs/submission.md`
 
 ## 限制(真实)
 

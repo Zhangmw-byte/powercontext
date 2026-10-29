@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>复习记忆助手</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>复习记忆助手</h1>
+      <p class="sub">Qoder × OceanBase 2026 · PowerContext 持久化记忆</p>
+    </div>
+    <div class="learner-bar">
+      <label for="learnerSelect">当前学习者</label>
+      <select id="learnerSelect"></select>
+      <input id="newLearnerId" placeholder="学习者ID (如 xiaoming)" maxlength="64" />
+      <input id="newLearnerName" placeholder="显示名称 (如 小明)" maxlength="64" />
+      <button id="addLearnerBtn" class="primary">添加学习者</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="overview" class="tab active">学习概览</button>
+    <button data-tab="profile" class="tab">档案</button>
+    <button data-tab="records" class="tab">学习记录</button>
+    <button data-tab="plan" class="tab">复习清单</button>
+    <button data-tab="memory" class="tab">记忆记录</button>
+  </nav>
+
+  <main id="notice" class="notice" hidden></main>
+
+  <main>
+    <section id="overview" class="panel active">
+      <div class="cards" id="overviewCards"></div>
+    </section>
+
+    <section id="profile" class="panel">
+      <h2>学习偏好</h2>
+      <form id="prefForm" class="form">
+        <label>每日学习时间(分钟)
+          <input type="number" id="dailyMinutes" min="1" max="600" value="30" required />
+        </label>
+        <label>学习目标
+          <input type="text" id="goal" maxlength="200" placeholder="如:期中考试" />
+        </label>
+        <label>偏好说明
+          <input type="text" id="preferences" maxlength="400" placeholder="如:喜欢例题、视觉化" />
+        </label>
+        <button type="submit" class="primary">保存偏好</button>
+      </form>
+      <div id="prefMsg" class="msg"></div>
+    </section>
+
+    <section id="records" class="panel">
+      <h2>添加学习记录</h2>
+      <form id="recordForm" class="form grid">
+        <label>课程<input type="text" id="course" maxlength="120" required /></label>
+        <label>知识点<input type="text" id="topic" maxlength="120" required /></label>
+        <label>掌握程度(0–5)
+          <input type="number" id="mastery" min="0" max="5" step="1" value="2" required />
+        </label>
+        <label>学习日期<input type="date" id="studiedOn" /></label>
+        <label class="full">笔记<input type="text" id="note" maxlength="1000" /></label>
+        <button type="submit" class="primary">保存记录</button>
+      </form>
+      <div id="recordMsg" class="msg"></div>
+      <h3>已保存记录</h3>
+      <div class="table-wrap"><table id="recordsTable"></table></div>
+    </section>
+
+    <section id="plan" class="panel">
+      <div class="row-between">
+        <h2>今日复习清单</h2>
+        <button id="refreshPlanBtn" class="ghost">重新生成</button>
+      </div>
+      <p class="hint">依据真实保存的掌握度、复习时间与每日时间预算,由规则算法(间隔重复)生成;薄弱知识点优先。未调用任何大模型。</p>
+      <div id="planSummary" class="plan-summary"></div>
+      <div class="table-wrap"><table id="planTable"></table></div>
+    </section>
+
+    <section id="memory" class="panel">
+      <div class="row-between">
+        <h2>记忆验证视图</h2>
+        <div>
+          <button id="refreshMemoryBtn" class="ghost">刷新当前视图</button>
+          <button id="refreshHistoryBtn" class="ghost">查看修订历史</button>
+        </div>
+      </div>
+      <p class="hint">展示真实 scope、revision、条目 entry_id/entry_version_id 及 SDK 回查的正文,非伪造响应。</p>
+      <div id="memoryView"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

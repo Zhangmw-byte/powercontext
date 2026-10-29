@@ -1,0 +1,14 @@
+# Python virtual environment
+.venv/
+
+# Local SQLite persistence, runtime data, caches, logs
+.data/*
+!.data/.gitkeep
+data/
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log

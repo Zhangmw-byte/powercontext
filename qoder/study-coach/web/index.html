@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>复习记忆助手 · Qoder × OceanBase 2026</title>
+<meta name="description" content="基于 powercontext[builtin] 真实 SQLite 持久化后端的复习记忆助手:保存学习偏好、薄弱知识点与复习进度,重启后继续读取,并按掌握度与每日时间预算规则生成复习清单。本地运行版。" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6df6'/%3E%3Cpath d='M9 21V11h5a3 3 0 0 1 0 6H9m8 4-4-4' stroke='white' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap head-inner">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <span>复习记忆助手</span>
+    </div>
+    <nav class="nav" aria-label="主导航">
+      <a href="#intro">介绍</a>
+      <a href="#features">功能</a>
+      <a href="#powercontext">PowerContext</a>
+      <a href="#screenshots">界面截图</a>
+      <a href="#run">运行说明</a>
+      <a href="#source">源码</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Qoder × OceanBase 2026 比赛项目</p>
+      <h1>把复习记忆交给<br />可持久化的 PowerContext</h1>
+      <p class="lede">
+        为不同学习者保存学习偏好、薄弱知识点与复习进度,写入
+        <code>powercontext[builtin]</code> 的真实 SQLite 后端;服务重启后继续读取这些记忆,
+        并按掌握程度与每日学习时间生成复习清单。全程离线运行,不依赖任何大模型或外部 API Key。
+      </p>
+      <div class="hero-meta">
+        <span class="badge local">本地运行版 · 无在线体验入口</span>
+        <span class="badge">Python 3.12</span>
+        <span class="badge">FastAPI</span>
+        <span class="badge">原生 HTML/CSS/JS</span>
+        <span class="badge">powercontext 1.2.0</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="intro" class="band">
+    <div class="wrap two-col">
+      <div>
+        <h2>项目介绍</h2>
+        <p>
+          复习记忆助手是一个多学习者的复习管理应用。它的核心主张是:
+          <strong>记忆不放在进程内存里,而是交给 PowerContext 的持久化后端托管</strong>。
+          因此关闭服务再启动,学习者的偏好、记录与进度都还在。
+        </p>
+        <p>
+          复习清单不是"看起来智能"的黑箱,而是<strong>规则算法</strong>(SM-2 风格间隔重复)
+          根据真实保存的掌握度、复习时间与每日时间预算算出来的,每条推荐都附带可读的理由。
+        </p>
+      </div>
+      <ul class="facts">
+        <li><span>持久化后端</span><strong>SQLite(WAL)+ FTS5</strong></li>
+        <li><span>清单生成</span><strong>规则算法,非大模型</strong></li>
+        <li><span>学习者隔离</span><strong>按 PowerContext scope</strong></li>
+        <li><span>外部依赖</span><strong>无模型 / 无 API Key</strong></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="features" class="band alt">
+    <div class="wrap">
+      <h2>核心功能</h2>
+      <div class="grid">
+        <article class="card"><h3>多学习者管理</h3><p>创建与切换学习者;学习者注册表本身也持久化,重启后仍在。</p></article>
+        <article class="card"><h3>学习偏好</h3><p>保存每日学习时间、学习目标与偏好说明,生成清单时实际读取。</p></article>
+        <article class="card"><h3>学习记录</h3><p>课程、知识点、笔记、掌握程度 0–5;字段类型与取值严格校验,非法数据被拒绝。</p></article>
+        <article class="card"><h3>复习清单</h3><p>按真实掌握度、复习时间与每日预算生成,薄弱优先,每条附推荐理由。</p></article>
+        <article class="card"><h3>结果回写与历史</h3><p>回写复习结果更新最新进度;历史记录经 SDK 逐修订回查仍可查看。</p></article>
+        <article class="card"><h3>记忆验证视图</h3><p>展示真实 scope、revision、entry_id / entry_version_id 及 SDK 回查正文。</p></article>
+      </div>
+      <p class="note">相同内容重复提交不会产生重复记录(复用 SDK 内容级幂等 + 应用层结果指纹)。</p>
+    </div>
+  </section>
+
+  <section id="powercontext" class="band">
+    <div class="wrap">
+      <h2>PowerContext 的实际作用</h2>
+      <p class="sub">应用负责领域语义与算法,PowerContext 负责记忆的持久化与一致性。二者分工如下:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>职责</th><th>承担者</th></tr></thead>
+          <tbody>
+            <tr><td>记忆的持久化与一致性</td><td>powercontext[builtin]:SQLite(WAL)后端、FTS5 索引、条目内容哈希去重、revision 版本与逐修订历史</td></tr>
+            <tr><td>读写记忆的 API</td><td>MemoryService(remember / head_entries / entries / revisions / changes / search / forget),经 app/memory_repo.py 调用</td></tr>
+            <tr><td>学习者隔离</td><td>PowerContext 的 scope 机制;注册表用 study-coach-registry,每位学习者 learner-&lt;id&gt;</td></tr>
+            <tr><td>领域语义(掌握度、间隔、预算)</td><td>应用层:业务字段编码为带版本标识的规范 JSON 存入条目 text</td></tr>
+            <tr><td>复习清单算法</td><td>应用层 app/review.py(纯规则 SM-2 风格,<strong>非</strong> PowerContext、<strong>非</strong> 大模型)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">本项目将掌握程度、复习时间等业务字段编码为 JSON,存入 PowerContext 记忆条目的 text;条目标识、版本和引用由 SDK 管理。</p>
+    </div>
+  </section>
+
+  <section id="screenshots" class="band alt">
+    <div class="wrap">
+      <h2>真实界面截图</h2>
+      <p class="sub">以下截图来自本地运行(<code>localhost:8765</code>)的真实浏览器人工操作,非设计稿或示意图。</p>
+      <div class="shots">
+        <figure><img src="assets/09-review-plan.png" alt="复习清单页:两条到期记录,薄弱优先排序,含推荐理由与预算占用" width="1170" height="600" loading="lazy" /><figcaption>复习清单:薄弱优先排序、推荐理由、预算占用,并明示规则生成、未调用大模型。</figcaption></figure>
+        <figure><img src="assets/05-memory-details.png" alt="记忆验证视图:真实 scope、revision、entry_id、entry_version_id 与 SDK 回查正文" width="1170" height="600" loading="lazy" /><figcaption>记忆验证视图:真实 scope / revision / entry_id / entry_version_id 与 SDK 回查正文。</figcaption></figure>
+        <figure><img src="assets/08-preferences.png" alt="档案页学习偏好表单:每日学习时间、学习目标、偏好说明" width="820" height="560" loading="lazy" /><figcaption>档案:学习偏好表单(每日学习时间、目标、偏好说明)。</figcaption></figure>
+        <figure><img src="assets/10-review-history.png" alt="学习记录页:保存成功提示与已保存记录表" width="1266" height="836" loading="lazy" /><figcaption>学习记录:保存成功提示与中文记录列表。</figcaption></figure>
+        <figure><img src="assets/06-learner-isolation.png" alt="切换到学习者 B 后概览为空,体现数据隔离" width="1266" height="700" loading="lazy" /><figcaption>学习者隔离:切换到 B 后概览为空,看不到 A 的数据。</figcaption></figure>
+        <figure><img src="assets/07-after-restart.png" alt="重启服务后学习者 A 概览仍显示记录" width="1266" height="700" loading="lazy" /><figcaption>重启恢复:停止并重启服务后,学习者 A 的记录仍在。</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="run" class="band">
+    <div class="wrap">
+      <h2>运行说明</h2>
+      <p class="sub">应用为本地运行版。在装好 <code>uv</code> 的环境中,于项目目录执行以下三步:</p>
+      <pre class="code"><code>cd qoder/study-coach
+
+# 1. 准备锁定依赖(安装到 .venv)
+bash scripts/prepare.sh
+
+# 2. 运行测试(独立临时数据库,不触碰用户数据)
+bash scripts/test.sh
+
+# 3. 启动服务(默认 http://127.0.0.1:8765)
+bash scripts/start.sh</code></pre>
+      <p>浏览器打开 <code>http://127.0.0.1:8765</code>,先添加学习者,再设置偏好、录入学习记录、查看复习清单、回写复习结果,并在"记忆记录"页查看真实持久化内容。</p>
+      <ul class="runlist">
+        <li><span>环境</span>Python 3.12 · powercontext[builtin] 1.2.0 · FastAPI · uv(依赖以 uv.lock 锁定)</li>
+        <li><span>停止/重启</span>Ctrl-C 停止;再次 start.sh 指向同一数据库即恢复全部记忆,不清空数据</li>
+        <li><span>数据库</span>默认 .data/study_coach.db(SQLite,WAL);GET /healthz 返回真实路径</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="source" class="band alt">
+    <div class="wrap two-col">
+      <div>
+        <h2>源码结构</h2>
+        <p>与 PowerContext 真实 API 的唯一交互点是 <code>app/memory_repo.py</code>;清单算法在 <code>app/review.py</code>;字段校验与编解码在 <code>app/models.py</code>;HTTP 与前端在 <code>app/app.py</code> 与 <code>static/</code>。</p>
+        <p>仓库位于 GitHub 分支 <code>feat/qoder-study-coach</code>,含完整自动化测试(18 项)与真实浏览器截图证据。</p>
+      </div>
+      <pre class="code tree"><code>qoder/study-coach/
+├── app/
+│   ├── app.py          # FastAPI 入口、lifespan、路由
+│   ├── memory_repo.py  # 与 powercontext 真实 API 交互
+│   ├── review.py       # SM-2 风格调度 + 清单(纯规则)
+│   └── models.py       # 请求/响应、校验、条目编解码
+├── static/             # 中文单页前端
+├── tests/test_app.py   # 集成与单元测试
+├── scripts/            # prepare / test / start
+├── docs/               # 需求/开发/验证/证据
+├── pyproject.toml
+└── uv.lock</code></pre>
+    </div>
+  </section>
+
+  <section id="limits" class="band">
+    <div class="wrap">
+      <h2>限制(如实)</h2>
+      <ul class="limits">
+        <li>本地单进程 + 单一 SQLite 文件,面向比赛演示与本地运行,未做多实例/并发写调优。</li>
+        <li>接口层不做身份认证;学习者靠 scope 逻辑隔离,请勿暴露到不受信网络。</li>
+        <li>完全离线:只用 SQLite FTS5,不接大模型、不做向量检索;清单与理由均为规则产生。</li>
+        <li>掌握度、日期、时长等领域字段由应用层编码进记忆条目 text,非 SDK 原生结构。</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>复习记忆助手 · Qoder × OceanBase 2026</span>
+    <span class="muted">本地运行版 · 内容与截图均来自真实实现</span>
+  </div>
+</footer>
+</body>
+</html>

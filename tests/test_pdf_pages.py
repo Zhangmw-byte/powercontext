@@ -304,6 +304,54 @@ def test_real_scoped_search_restart_distinct_pages_citations_and_current_state(t
     asyncio.run(scenario())
 
 
+def test_revisions_in_one_scope_return_each_physical_page_once_and_keep_old_citations(tmp_path):
+    async def scenario():
+        config = BuiltinConfig(database=SQLiteConfig(url=f"sqlite+aiosqlite:///{tmp_path / 'revisions.db'}"))
+        registry = SourceDefinitionRegistry((PDF_PAGE_SOURCE_DEFINITION,))
+        original = parse_pdf_document(
+            PDFDocumentInput(
+                document_id="ACME_2022_10K", content=_pdf("Revenue table 100.", "Cash flow 7.", title="one")
+            )
+        )
+        revised = parse_pdf_document(
+            PDFDocumentInput(
+                document_id="ACME_2022_10K", content=_pdf("Revenue table 100.", "Cash flow 9.", title="two")
+            )
+        )
+        question = "What does the Acme revenue table and cash flow show?"
+        async with open_builtin_runtime(config, candidate_pipeline=_LiteralPipeline()) as runtime:
+            assert runtime.scopes is not None
+            scope = await runtime.scopes.create(ScopeDraft(title="Report", summary="Revisions", idempotency_key="rev"))
+            await runtime.ingestion.register(manifest_for_definition(PDF_PAGE_SOURCE_DEFINITION))
+            memory = runtime.memory.for_scope(scope.scope_id)
+            old_citations = ()
+            for pages in (original, revised):
+                for page in pages:
+                    observation = project_source_for_transport(registry, await registry.resolve(page))
+                    await runtime.ingestion.submit(
+                        SubmitSourceObservation(scope_id=scope.scope_id, observation=observation)
+                    )
+                while (await memory.flush()).processed:
+                    pass
+                old_citations = old_citations or await search_pdf_pages(memory, question, 20)
+        async with open_builtin_runtime(config) as runtime:
+            memory = runtime.memory.for_scope(scope.scope_id)
+            sources = {(await registry.resolve(page)).name: page for page in (*original, *revised)}
+            found = []
+            for citation in await search_pdf_pages(memory, question, 20):
+                record = await memory.get(GetMemoryEntryRequest(citation=citation))
+                found.append(sources[record.entry.sources[0].source_id])
+            assert sorted((page.page_number, page.document_sha256) for page in found) == [
+                (1, revised[0].document_sha256),
+                (2, revised[1].document_sha256),
+            ]
+            for citation in old_citations:
+                record = await memory.get(GetMemoryEntryRequest(citation=citation))
+                assert sources[record.entry.sources[0].source_id].document_sha256 == original[0].document_sha256
+
+    asyncio.run(scenario())
+
+
 @pytest.mark.parametrize("question, limit", [(" ", 20), (None, 20), ("report", True), ("report", 1.5), ("report", -1)])
 def test_invalid_search_requests_fail_before_reading_memory(question, limit):
     with pytest.raises(ValueError):

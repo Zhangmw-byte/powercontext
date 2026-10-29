@@ -11,6 +11,7 @@ import math
 import re
 import unicodedata
 from collections import Counter
+from collections.abc import Callable, Hashable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -312,9 +313,8 @@ def _select_reports(pages: list[_Page], question: str) -> list[_Page]:
     return [page for page in pages if page.document in selected]
 
 
-def _pages(records: tuple[MemoryEntryRecord, ...]) -> list[_Page]:
-    pages = []
-    seen = set()
+def _pages(records: tuple[MemoryEntryRecord, ...], physical_page: Callable[[str], Hashable]) -> list[_Page]:
+    current: dict[Hashable, tuple[MemoryEntryRecord, tuple[str, str]]] = {}
     for record in records:
         refs = {(ref.source_type, ref.source_id) for ref in record.entry.sources if ref.source_type == "pdf-page"}
         # One citation must locate one page. Synthesized multi-page memories cannot
@@ -322,9 +322,15 @@ def _pages(records: tuple[MemoryEntryRecord, ...]) -> list[_Page]:
         if len(refs) != 1:
             continue
         identity = next(iter(refs))
-        if identity in seen:
-            continue
-        seen.add(identity)
+        # Revisions of one report can share a scope. Each physical page is returned
+        # once, from the most recently remembered revision; older citations still
+        # resolve to their own revision through Memory get.
+        location = physical_page(identity[1])
+        held = current.get(location)
+        if held is None or (record.entry.created_in_revision, identity) > (held[0].entry.created_in_revision, held[1]):
+            current[location] = (record, identity)
+    pages = []
+    for record, identity in current.values():
         document, _, body = record.entry.text.partition("\n")
         if body.strip():
             pages.append(_Page.of(record, identity, document, body))
@@ -458,7 +464,9 @@ def _reserved_pages(
     return reserved
 
 
-async def retrieve_pdf_pages(memory: PDFMemory, question: str, limit: int) -> tuple[MemoryCitation, ...]:
+async def retrieve_pdf_pages(
+    memory: PDFMemory, question: str, limit: int, physical_page: Callable[[str], Hashable]
+) -> tuple[MemoryCitation, ...]:
     if not isinstance(question, str) or not question.strip():
         raise ValueError("PDF question must be a nonempty string")  # noqa: TRY003
     if type(limit) is not int or limit < 0:
@@ -470,7 +478,7 @@ async def retrieve_pdf_pages(memory: PDFMemory, question: str, limit: int) -> tu
     # At the supported report scale this scans the current pages once per query;
     # no process-local cache or hidden/stale corpus survives a Memory change.
     current = await memory.list()
-    pages = _pages(current.entries)
+    pages = _pages(current.entries, physical_page)
     if not pages:
         return ()
     found = await memory.search(

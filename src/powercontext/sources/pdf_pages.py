@@ -70,11 +70,20 @@ class PDFPageInput(BaseModel):
 
 
 def pdf_page_source_id(value: PDFPageInput) -> str:
-    """Hash a length-unambiguous, versioned tuple; long document IDs remain bounded."""
-    identity = json.dumps(
-        [value.document_id, value.document_sha256, value.page_number], ensure_ascii=True, separators=(",", ":")
-    )
-    return "pdf:" + sha256(identity.encode("ascii")).hexdigest()
+    """Name one page of one file revision; long document IDs stay bounded by hashing.
+
+    The hashed document ID and the physical page number remain separable, so a
+    scope holding several revisions of a report still knows which stored pages
+    are the same physical page.
+    """
+    document = sha256(json.dumps(value.document_id, ensure_ascii=True).encode("ascii")).hexdigest()
+    return f"pdf:{document}:{value.document_sha256}:{value.page_number}"
+
+
+def _physical_page(source_id: str) -> tuple[str, str]:
+    """Return the (hashed document ID, page number) shared by every revision of a page."""
+    _, document, _, page = source_id.split(":")
+    return document, page
 
 
 def _open_pdf(content: bytes) -> PdfReader:
@@ -180,7 +189,7 @@ PDF_PAGE_SOURCE_DEFINITION: SourceDefinition[PDFPageInput, PDFPageSource, PDFPag
 
 async def search_pdf_pages(memory: PDFMemory, question: str, limit: int = 10) -> tuple[MemoryCitation, ...]:
     """Search scoped current Memory and return distinct, exact stored-page citations."""
-    return await retrieve_pdf_pages(memory, question, limit)
+    return await retrieve_pdf_pages(memory, question, limit, _physical_page)
 
 
 __all__ = [
